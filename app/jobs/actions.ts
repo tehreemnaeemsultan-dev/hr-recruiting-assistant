@@ -8,6 +8,7 @@ import { extractPdfText } from "@/lib/pdf";
 import { parseCandidateFields } from "@/lib/parse";
 import { scoreCandidate, isScoringConfigured } from "@/lib/scoring";
 import type { ParsedCandidate } from "@/lib/types";
+import { STAGES, type Stage } from "@/lib/constants";
 
 // Cost controls (SPEC §10).
 const MAX_CVS_PER_BATCH = 20;
@@ -378,6 +379,66 @@ export async function deleteCandidate(
 
   // Cascades applications + events (and emails/interviews in later phases).
   const { error } = await supabase.from("candidates").delete().eq("id", candidateId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/jobs/${jobId}`);
+  return { ok: true };
+}
+
+// --- Pipeline board (Phase 2) --------------------------------------------
+
+/** Move an application to a new stage and log an `events` row (SPEC §5). */
+export async function moveApplicationStage(
+  applicationId: string,
+  jobId: string,
+  toStage: Stage,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await requireUser();
+  if (!supabase) return { ok: false, error: "Not authenticated." };
+  if (!STAGES.includes(toStage)) return { ok: false, error: "Invalid stage." };
+
+  const { data: app } = await supabase
+    .from("applications")
+    .select("stage")
+    .eq("id", applicationId)
+    .single();
+  if (!app) return { ok: false, error: "Application not found." };
+
+  const fromStage = app.stage as Stage;
+  if (fromStage === toStage) return { ok: true };
+
+  const { error: uErr } = await supabase
+    .from("applications")
+    .update({ stage: toStage })
+    .eq("id", applicationId);
+  if (uErr) return { ok: false, error: uErr.message };
+
+  // Audit + timing log — powers Phase 6 analytics.
+  await supabase.from("events").insert({
+    application_id: applicationId,
+    type: "stage_changed",
+    from_stage: fromStage,
+    to_stage: toStage,
+    payload: {},
+  });
+
+  revalidatePath(`/jobs/${jobId}/board`);
+  revalidatePath(`/jobs/${jobId}`);
+  return { ok: true };
+}
+
+export async function updateApplicationNotes(
+  applicationId: string,
+  jobId: string,
+  notes: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await requireUser();
+  if (!supabase) return { ok: false, error: "Not authenticated." };
+
+  const { error } = await supabase
+    .from("applications")
+    .update({ notes })
+    .eq("id", applicationId);
   if (error) return { ok: false, error: error.message };
 
   revalidatePath(`/jobs/${jobId}`);

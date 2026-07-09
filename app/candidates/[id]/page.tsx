@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, RESUMES_BUCKET } from "@/lib/supabase/admin";
 import { AppHeader } from "@/components/app-header";
+import { ApplicationNotes } from "@/components/application-notes";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -25,8 +26,10 @@ interface CandidateRow {
   created_at: string;
   applications: {
     id: string;
+    job_id: string;
     score: number | null;
     score_summary: string | null;
+    notes: string | null;
     jobs: { id: string; title: string } | null;
   }[];
 }
@@ -46,7 +49,7 @@ export default async function CandidatePage({
   const { data } = await supabase
     .from("candidates")
     .select(
-      "*, applications(id, score, score_summary, jobs(id, title))",
+      "*, applications(id, score, score_summary, notes, job_id, jobs(id, title))",
     )
     .eq("id", id)
     .single();
@@ -120,24 +123,31 @@ export default async function CandidatePage({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Applications</CardTitle>
+              <CardTitle className="text-base">Applications & notes</CardTitle>
               <CardDescription>Jobs this candidate is on.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2 text-sm">
+            <CardContent className="flex flex-col gap-5 text-sm">
               {candidate.applications.length === 0 ? (
                 <span className="text-muted-foreground">None.</span>
               ) : (
                 candidate.applications.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between gap-2">
-                    <Link
-                      href={a.jobs ? `/jobs/${a.jobs.id}` : "#"}
-                      className="hover:underline"
-                    >
-                      {a.jobs?.title ?? "Unknown job"}
-                    </Link>
-                    <Badge variant={a.score !== null ? "default" : "outline"}>
-                      {a.score !== null ? a.score : "unscored"}
-                    </Badge>
+                  <div key={a.id} className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <Link
+                        href={a.jobs ? `/jobs/${a.jobs.id}` : "#"}
+                        className="font-medium hover:underline"
+                      >
+                        {a.jobs?.title ?? "Unknown job"}
+                      </Link>
+                      <Badge variant={a.score !== null ? "default" : "outline"}>
+                        {a.score !== null ? a.score : "unscored"}
+                      </Badge>
+                    </div>
+                    <ApplicationNotes
+                      applicationId={a.id}
+                      jobId={a.job_id}
+                      initialNotes={a.notes ?? ""}
+                    />
                   </div>
                 ))
               )}

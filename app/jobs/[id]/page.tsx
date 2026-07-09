@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/app-header";
 import { CvUploader } from "@/components/cv-uploader";
 import { CandidateCard, type CandidateCardData } from "@/components/candidate-card";
 import { RescoreJobButton } from "@/components/rescore-job-button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -111,9 +112,18 @@ export default async function JobDetailPage({
                 {scoredCount} scored
               </p>
             </div>
-            {cards.length > 0 ? (
-              <RescoreJobButton jobId={job.id} disabled={!scoringOn} />
-            ) : null}
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                render={<Link href={`/jobs/${job.id}/board`} />}
+                variant="outline"
+                size="sm"
+              >
+                Board
+              </Button>
+              {cards.length > 0 ? (
+                <RescoreJobButton jobId={job.id} disabled={!scoringOn} />
+              ) : null}
+            </div>
           </div>
         </div>
 
