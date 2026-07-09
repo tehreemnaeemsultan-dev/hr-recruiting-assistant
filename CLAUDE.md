@@ -24,12 +24,13 @@ clever. Do not build anything outside the current phase without the owner asking
 - **Supabase** (`@supabase/supabase-js`, `@supabase/ssr`) — Postgres, Auth,
   Storage, Realtime, RLS.
 - **Deploy:** Vercel.
-- **CV scoring (Phase 1):** `@anthropic-ai/sdk`. Model **`claude-sonnet-5`**
-  (override with `ANTHROPIC_MODEL`, e.g. `claude-haiku-4-5` for cheaper bulk).
-  Scoring uses a **forced single tool call** (`submit_score`, `strict: true`) with
-  **`thinking: {type:"disabled"}`** — note Sonnet 5 **rejects `temperature`/`top_p`**
-  (400), so consistency comes from the prompt + forced tool, not sampling params.
-  Contract lives in `lib/scoring.ts` (SPEC §9).
+- **CV scoring (Phase 1):** **Google Gemini** via `@google/genai`. Model
+  **`gemini-2.5-flash`** (override with `GEMINI_MODEL`, e.g. `gemini-2.5-pro`).
+  Structured JSON via `config.responseSchema` + `responseMimeType:"application/json"`,
+  `temperature: 0` for consistency. Contract lives in `lib/scoring.ts` (SPEC §9).
+  **Owner-approved deviation from SPEC §2**, which locked the scoring engine to
+  Anthropic — the owner switched to Gemini on 2026-07-09. `GEMINI_API_KEY` is the
+  only scoring secret.
 - **PDF text extraction:** **`unpdf`** (serverless-friendly, no native deps) —
   `lib/pdf.ts`.
 - Later phases: Zoho Mail (Phase 3), Google Calendar (Phase 4), Apify cookieless

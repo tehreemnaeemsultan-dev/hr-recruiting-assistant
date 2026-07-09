@@ -122,7 +122,7 @@ export default async function JobDetailPage({
             <CardHeader>
               <CardTitle className="text-base">Scoring not configured</CardTitle>
               <CardDescription>
-                Set <code>ANTHROPIC_API_KEY</code> to score CVs. Uploads still
+                Set <code>GEMINI_API_KEY</code> to score CVs. Uploads still
                 work — candidates will be added unscored, then you can re-score.
               </CardDescription>
             </CardHeader>

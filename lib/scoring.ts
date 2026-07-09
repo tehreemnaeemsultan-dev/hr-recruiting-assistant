@@ -1,10 +1,11 @@
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI, Type } from "@google/genai";
 import type { ScoreBreakdown, Recommendation } from "./types";
 
-// SPEC §3: default to Claude Sonnet 5; override to claude-haiku-4-5 for cheaper
-// high-volume scoring via ANTHROPIC_MODEL.
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+// CV scoring via Google Gemini (owner-approved switch from Anthropic; see CLAUDE.md).
+// Default model: gemini-2.5-flash (stable, best price-performance for high-volume).
+// Override with GEMINI_MODEL (e.g. gemini-2.5-pro for higher quality).
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 // Cost/consistency control: cap the CV text sent to the model (SPEC §9).
 const MAX_CV_CHARS = 24000;
@@ -18,62 +19,55 @@ Rules:
 - evidence should be a short quote or close paraphrase from the CV.
 - recommendation: "strong" (excellent fit), "possible" (partial fit / worth a look), or "weak" (poor fit).
 - summary is 2-3 sentences justifying the score.
-- Be consistent and evidence-based. Return your assessment ONLY by calling the submit_score tool.`;
+- Be consistent and evidence-based.`;
 
-const SCORING_TOOL: Anthropic.Tool = {
-  name: "submit_score",
-  description:
-    "Submit the structured scoring result for this candidate against the job.",
-  // strict: true guarantees the input validates against this schema.
-  strict: true,
-  input_schema: {
-    type: "object",
-    additionalProperties: false,
-    properties: {
-      overall_score: {
-        type: "integer",
-        description: "Overall fit score, integer 0-100.",
-      },
-      recommendation: {
-        type: "string",
-        enum: ["strong", "possible", "weak"],
-      },
-      criteria_breakdown: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            criterion: {
-              type: "string",
-              description: "Echo of the free-form criterion being assessed.",
-            },
-            met: { type: "boolean" },
-            evidence: {
-              type: "string",
-              description: "Short quote/paraphrase from the CV, or 'not stated'.",
-            },
-            weight_note: {
-              type: "string",
-              description: "Why this criterion mattered to the score.",
-            },
-          },
-          required: ["criterion", "met", "evidence", "weight_note"],
-        },
-      },
-      strengths: { type: "array", items: { type: "string" } },
-      gaps: { type: "array", items: { type: "string" } },
-      summary: { type: "string" },
+// Gemini structured-output schema mirroring the SPEC §9 contract.
+const RESPONSE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    overall_score: {
+      type: Type.INTEGER,
+      description: "Overall fit score, integer 0-100.",
     },
-    required: [
-      "overall_score",
-      "recommendation",
-      "criteria_breakdown",
-      "strengths",
-      "gaps",
-      "summary",
-    ],
+    recommendation: {
+      type: Type.STRING,
+      format: "enum",
+      enum: ["strong", "possible", "weak"],
+    },
+    criteria_breakdown: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          criterion: { type: Type.STRING },
+          met: { type: Type.BOOLEAN },
+          evidence: { type: Type.STRING },
+          weight_note: { type: Type.STRING },
+        },
+        required: ["criterion", "met", "evidence", "weight_note"],
+        propertyOrdering: ["criterion", "met", "evidence", "weight_note"],
+      },
+    },
+    strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+    gaps: { type: Type.ARRAY, items: { type: Type.STRING } },
+    summary: { type: Type.STRING },
   },
+  required: [
+    "overall_score",
+    "recommendation",
+    "criteria_breakdown",
+    "strengths",
+    "gaps",
+    "summary",
+  ],
+  propertyOrdering: [
+    "overall_score",
+    "recommendation",
+    "criteria_breakdown",
+    "strengths",
+    "gaps",
+    "summary",
+  ],
 };
 
 function clampScore(n: unknown): number {
@@ -101,7 +95,7 @@ function normalize(raw: unknown): ScoreBreakdown {
 }
 
 export function isScoringConfigured(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return Boolean(process.env.GEMINI_API_KEY);
 }
 
 /** Score one candidate's CV against a job. Throws on API/config failure. */
@@ -111,27 +105,17 @@ export async function scoreCandidate(input: {
   criteriaText: string;
   rawText: string;
 }): Promise<ScoreBreakdown> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY is not set — cannot score candidates.");
+    throw new Error("GEMINI_API_KEY is not set — cannot score candidates.");
   }
 
-  const client = new Anthropic({ apiKey });
+  const ai = new GoogleGenAI({ apiKey });
   const cv = input.rawText.slice(0, MAX_CV_CHARS);
 
-  const message = await client.messages.create({
+  const response = await ai.models.generateContent({
     model: MODEL,
-    max_tokens: 4096,
-    // Deterministic scoring: no thinking, forced single tool call. (Sonnet 5
-    // rejects temperature/top_p, so consistency comes from prompt + forced tool.)
-    thinking: { type: "disabled" },
-    tools: [SCORING_TOOL],
-    tool_choice: { type: "tool", name: "submit_score" },
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: `JOB TITLE:
+    contents: `JOB TITLE:
 ${input.jobTitle}
 
 JOB DESCRIPTION:
@@ -142,13 +126,25 @@ ${input.criteriaText || "(none provided)"}
 
 CANDIDATE CV (extracted text):
 ${cv || "(no text could be extracted)"}`,
-      },
-    ],
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
+      responseMimeType: "application/json",
+      responseSchema: RESPONSE_SCHEMA,
+      // Gemini supports temperature; keep scoring deterministic (SPEC §9).
+      temperature: 0,
+    },
   });
 
-  const toolUse = message.content.find((b) => b.type === "tool_use");
-  if (!toolUse || toolUse.type !== "tool_use") {
-    throw new Error("Model did not return a structured score.");
+  const text = response.text;
+  if (!text) {
+    throw new Error("Gemini returned no content.");
   }
-  return normalize(toolUse.input);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("Gemini returned invalid JSON.");
+  }
+  return normalize(parsed);
 }

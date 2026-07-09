@@ -333,7 +333,7 @@ export async function rescoreApplication(
   const supabase = await requireUser();
   if (!supabase) return { ok: false, error: "Not authenticated." };
   if (!isScoringConfigured()) {
-    return { ok: false, error: "Scoring is not configured (ANTHROPIC_API_KEY missing)." };
+    return { ok: false, error: "Scoring is not configured (GEMINI_API_KEY missing)." };
   }
   const r = await scoreApplications(supabase, [applicationId]);
   revalidatePath(`/jobs/${jobId}`);
@@ -346,7 +346,7 @@ export async function rescoreJob(
   const supabase = await requireUser();
   if (!supabase) return { ok: false, error: "Not authenticated." };
   if (!isScoringConfigured()) {
-    return { ok: false, error: "Scoring is not configured (ANTHROPIC_API_KEY missing)." };
+    return { ok: false, error: "Scoring is not configured (GEMINI_API_KEY missing)." };
   }
   const { data: apps } = await supabase
     .from("applications")
