@@ -1,0 +1,2 @@
+# Never upload local secret files to Vercel (env vars are set in project settings).
+.env*.local
