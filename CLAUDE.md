@@ -24,9 +24,36 @@ clever. Do not build anything outside the current phase without the owner asking
 - **Supabase** (`@supabase/supabase-js`, `@supabase/ssr`) — Postgres, Auth,
   Storage, Realtime, RLS.
 - **Deploy:** Vercel.
-- Later phases: Anthropic SDK (Phase 1), Zoho Mail (Phase 3), Google Calendar
-  (Phase 4), Apify cookieless actors (Phase 5). PDF library, exact Apify actors,
-  and confirmed Anthropic model name to be recorded here as they are chosen.
+- **CV scoring (Phase 1):** `@anthropic-ai/sdk`. Model **`claude-sonnet-5`**
+  (override with `ANTHROPIC_MODEL`, e.g. `claude-haiku-4-5` for cheaper bulk).
+  Scoring uses a **forced single tool call** (`submit_score`, `strict: true`) with
+  **`thinking: {type:"disabled"}`** — note Sonnet 5 **rejects `temperature`/`top_p`**
+  (400), so consistency comes from the prompt + forced tool, not sampling params.
+  Contract lives in `lib/scoring.ts` (SPEC §9).
+- **PDF text extraction:** **`unpdf`** (serverless-friendly, no native deps) —
+  `lib/pdf.ts`.
+- Later phases: Zoho Mail (Phase 3), Google Calendar (Phase 4), Apify cookieless
+  actors (Phase 5). Exact Apify actors to be recorded here when chosen.
+
+## shadcn base-nova = Base UI (not Radix)
+
+The `base-nova` style uses **Base UI** primitives, whose API differs from Radix:
+- Compose/polymorphism uses the **`render`** prop, not `asChild`. e.g. a button
+  that is a link: `<Button render={<Link href="…" />}>Label</Button>`.
+- `Accordion` uses **`multiple={false}`** (not Radix's `type="single" collapsible`).
+- `Badge`/`Button` accept variants: default, secondary, destructive, outline, ghost, link.
+
+## CV upload + Storage (Phase 1)
+
+- Private Storage bucket **`resumes`** (PDF only, 15 MB), created by
+  `scripts/setup-storage.mjs` (service role). No Storage RLS policies — all access
+  is server-side.
+- Uploads go **browser → Storage directly** via `createSignedUploadUrl`
+  (server, service role) + `uploadToSignedUrl` (client). This avoids Vercel's
+  ~4.5 MB serverless request-body limit. The server then downloads each file with
+  the service role, extracts text, creates candidate + application rows, and scores.
+- Caps: 20 CVs per upload batch; scoring runs at concurrency 4 (`app/jobs/actions.ts`).
+- Deleting a candidate/job also removes their Storage files (SPEC §10).
 
 ## Runtime / environment notes
 
