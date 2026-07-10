@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
+import { RoleTabs } from "@/components/role-tabs";
 import { PipelineBoard, type BoardItem } from "@/components/pipeline-board";
 import type { Stage } from "@/lib/constants";
 
@@ -34,58 +36,52 @@ export default async function BoardPage({
 
   const { data: rows } = await supabase
     .from("applications")
-    .select(
-      "id, candidate_id, stage, score, candidates(full_name, source, email)",
-    )
+    .select("id, candidate_id, stage, score, candidates(full_name, source, email)")
     .eq("job_id", id);
 
-  const items: BoardItem[] = ((rows ?? []) as unknown as BoardRow[]).map(
-    (a) => ({
-      applicationId: a.id,
-      candidateId: a.candidate_id,
-      fullName: a.candidates?.full_name ?? "Unknown candidate",
-      email: a.candidates?.email ?? null,
-      score: a.score,
-      source: a.candidates?.source ?? "upload",
-      stage: a.stage as Stage,
-    }),
-  );
+  const items: BoardItem[] = ((rows ?? []) as unknown as BoardRow[]).map((a) => ({
+    applicationId: a.id,
+    candidateId: a.candidate_id,
+    fullName: a.candidates?.full_name ?? "Unknown candidate",
+    email: a.candidates?.email ?? null,
+    score: a.score,
+    source: a.candidates?.source ?? "upload",
+    stage: a.stage as Stage,
+  }));
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader email={user.email} />
-      <main className="mx-auto w-full max-w-[1400px] flex-1 px-6 py-8">
-        <div className="mb-6">
-          <Link
-            href={`/jobs/${job.id}`}
-            className="text-muted-foreground text-sm hover:underline"
-          >
-            ← {job.title}
-          </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-            Pipeline board
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Drag candidates between stages. Changes save and log automatically.
-          </p>
+    <AppShell email={user.email}>
+      <div className="w-full px-6 py-8 md:py-10">
+        <Link
+          href="/"
+          className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1.5 text-sm"
+        >
+          <ArrowLeft className="size-4" /> Home
+        </Link>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{job.title}</h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Move people through your stages — changes save automatically.
+            </p>
+          </div>
+          <RoleTabs jobId={job.id} active="board" />
         </div>
 
         {items.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            No candidates yet.{" "}
-            <Link href={`/jobs/${job.id}`} className="text-primary underline">
-              Add CVs
-            </Link>{" "}
-            to populate the board.
-          </p>
+          <div className="bg-card rounded-2xl border border-dashed px-6 py-16 text-center">
+            <p className="text-muted-foreground text-sm">
+              No people yet.{" "}
+              <Link href={`/jobs/${job.id}`} className="text-primary underline">
+                Add some CVs
+              </Link>{" "}
+              to get started.
+            </p>
+          </div>
         ) : (
-          <PipelineBoard
-            jobId={job.id}
-            jobTitle={job.title}
-            initialItems={items}
-          />
+          <PipelineBoard jobId={job.id} jobTitle={job.title} initialItems={items} />
         )}
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

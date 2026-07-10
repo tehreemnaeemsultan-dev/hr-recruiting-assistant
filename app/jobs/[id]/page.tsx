@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeft, Upload, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isScoringConfigured } from "@/lib/scoring";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
+import { RoleTabs } from "@/components/role-tabs";
 import { CvUploader } from "@/components/cv-uploader";
 import { CandidateCard, type CandidateCardData } from "@/components/candidate-card";
 import { RescoreJobButton } from "@/components/rescore-job-button";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -14,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { ParsedCandidate, ScoreBreakdown, Recommendation } from "@/lib/types";
 
 const REC_RANK: Record<Recommendation, number> = {
@@ -38,7 +40,7 @@ interface AppRow {
   } | null;
 }
 
-export default async function JobDetailPage({
+export default async function RolePeoplePage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -50,11 +52,7 @@ export default async function JobDetailPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { data: job } = await supabase.from("jobs").select("*").eq("id", id).single();
   if (!job) notFound();
 
   const { data: appsRaw } = await supabase
@@ -79,7 +77,6 @@ export default async function JobDetailPage({
       breakdown: a.score_breakdown,
       rank: 0,
     }))
-    // Sort by score desc (nulls last), ties broken by recommendation (SPEC §9).
     .sort((x, y) => {
       if (x.score === null && y.score === null) return 0;
       if (x.score === null) return 1;
@@ -91,70 +88,62 @@ export default async function JobDetailPage({
     })
     .map((c, i) => ({ ...c, rank: i + 1 }));
 
-  const scoredCount = cards.filter((c) => c.score !== null).length;
+  const reviewedCount = cards.filter((c) => c.score !== null).length;
   const scoringOn = isScoringConfigured();
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader email={user.email} />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
-        <div className="mb-6">
-          <Link href="/" className="text-muted-foreground text-sm hover:underline">
-            ← Dashboard
-          </Link>
-          <div className="mt-2 flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">
-                {job.title}
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                {cards.length} candidate{cards.length === 1 ? "" : "s"} ·{" "}
-                {scoredCount} scored
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                render={<Link href={`/jobs/${job.id}/board`} />}
-                variant="outline"
-                size="sm"
-              >
-                Board
-              </Button>
-              {cards.length > 0 ? (
-                <RescoreJobButton jobId={job.id} disabled={!scoringOn} />
-              ) : null}
-            </div>
+    <AppShell email={user.email}>
+      <div className="mx-auto w-full max-w-4xl px-6 py-8 md:py-10">
+        <Link
+          href="/"
+          className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1.5 text-sm"
+        >
+          <ArrowLeft className="size-4" /> Home
+        </Link>
+
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{job.title}</h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {cards.length} {cards.length === 1 ? "person" : "people"} ·{" "}
+              {reviewedCount} reviewed
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {cards.length > 0 ? (
+              <RescoreJobButton jobId={job.id} disabled={!scoringOn} />
+            ) : null}
+            <RoleTabs jobId={job.id} active="people" />
           </div>
         </div>
 
         {!scoringOn ? (
-          <Card className="mb-6 border-destructive/40">
-            <CardHeader>
-              <CardTitle className="text-base">Scoring not configured</CardTitle>
-              <CardDescription>
-                Set <code>GEMINI_API_KEY</code> to score CVs. Uploads still
-                work — candidates will be added unscored, then you can re-score.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <Alert className="mb-6">
+            <AlertDescription>
+              Automatic review is off. Add <code>GEMINI_API_KEY</code> to score CVs.
+              Uploads still work — people are added unreviewed, then you can review.
+            </AlertDescription>
+          </Alert>
         ) : null}
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Job description</CardTitle>
+              <CardTitle className="text-sm font-medium">About the role</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-sm">
                 {job.jd_text || (
-                  <span className="text-muted-foreground">None provided.</span>
+                  <span className="text-muted-foreground">Nothing added yet.</span>
                 )}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Ranking criteria</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                What you&apos;re looking for
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-sm">{job.criteria_text}</p>
@@ -162,11 +151,14 @@ export default async function JobDetailPage({
           </Card>
         </div>
 
-        <Card className="mt-6">
+        <Card className="mt-4">
           <CardHeader>
-            <CardTitle className="text-base">Add CVs</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <Upload className="text-primary size-4" /> Add people
+            </CardTitle>
             <CardDescription>
-              Upload PDF resumes to rank them against this job.
+              Drop in CVs (PDF) and they&apos;ll be reviewed and ranked for this
+              role.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -175,11 +167,13 @@ export default async function JobDetailPage({
         </Card>
 
         <section className="mt-8">
-          <h2 className="mb-3 text-lg font-semibold">Ranked candidates</h2>
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+            <Sparkles className="text-primary size-4.5" /> Best matches first
+          </h2>
           {cards.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No candidates yet. Upload CVs above to get started.
-            </p>
+            <div className="bg-card text-muted-foreground rounded-2xl border border-dashed px-6 py-12 text-center text-sm">
+              No people yet — add some CVs above to get started.
+            </div>
           ) : (
             <div className="flex flex-col gap-3">
               {cards.map((c) => (
@@ -188,7 +182,7 @@ export default async function JobDetailPage({
             </div>
           )}
         </section>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

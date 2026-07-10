@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, RESUMES_BUCKET } from "@/lib/supabase/admin";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import { ApplicationNotes } from "@/components/application-notes";
 import { ComposeEmailDialog } from "@/components/compose-email-dialog";
 import { ScheduleInterviewDialog } from "@/components/schedule-interview-dialog";
@@ -74,15 +74,14 @@ export default async function CandidatePage({
   }
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader email={user.email} />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
+    <AppShell email={user.email}>
+      <div className="mx-auto w-full max-w-3xl px-6 py-8 md:py-10">
         <div className="mb-6">
           <Link
             href="/"
             className="text-muted-foreground text-sm hover:underline"
           >
-            ← Dashboard
+            ← Home
           </Link>
           <div className="mt-2 flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -217,7 +216,7 @@ export default async function CandidatePage({
             </pre>
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

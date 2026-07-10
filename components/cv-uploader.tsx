@@ -63,7 +63,7 @@ export function CvUploader({ jobId }: { jobId: string }) {
         }
       }
 
-      setStatus("Extracting text and scoring…");
+      setStatus("Reading and reviewing…");
       const ing = await ingestCandidates(
         jobId,
         res.targets.map((t) => ({ path: t.path, name: t.name })),
@@ -109,15 +109,15 @@ export function CvUploader({ jobId }: { jobId: string }) {
       />
       <div className="flex items-center gap-3">
         <Button type="button" onClick={handleUpload} disabled={busy || !files.length}>
-          {busy ? "Working…" : `Upload & score${files.length ? ` (${files.length})` : ""}`}
+          {busy ? "Working…" : `Upload & review${files.length ? ` (${files.length})` : ""}`}
         </Button>
         {status ? (
           <span className="text-muted-foreground text-sm">{status}</span>
         ) : null}
       </div>
       <p className="text-muted-foreground text-xs">
-        PDF only, up to {MAX_FILES} at a time. Text is extracted server-side, then
-        each CV is scored against this job&apos;s criteria.
+        PDF only, up to {MAX_FILES} at a time. We&apos;ll read each CV and rank
+        people for this role.
       </p>
     </div>
   );

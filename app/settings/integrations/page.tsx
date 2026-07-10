@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getGoogleConnection, isGoogleConfigured } from "@/lib/google";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import { DisconnectGoogleButton } from "@/components/disconnect-google-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,19 +45,17 @@ export default async function IntegrationsPage({
   const google = configured ? await getGoogleConnection(supabase) : null;
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader email={user.email} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
+    <AppShell email={user.email}>
+      <div className="mx-auto w-full max-w-2xl px-6 py-8 md:py-10">
         <div className="mb-6">
           <Link href="/" className="text-muted-foreground text-sm hover:underline">
-            ← Dashboard
+            ← Home
           </Link>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
             Integrations
           </h1>
           <p className="text-muted-foreground text-sm">
-            Connect Google to send candidate emails (and schedule interviews in
-            the next phase).
+            Connect Google to send emails and schedule interviews.
           </p>
         </div>
 
@@ -102,13 +100,13 @@ export default async function IntegrationsPage({
             ) : google ? (
               <DisconnectGoogleButton />
             ) : (
-              <Button render={<a href="/api/oauth/google/start" />}>
+              <Button render={<a href="/api/oauth/google/start" />} nativeButton={false}>
                 Connect Google
               </Button>
             )}
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

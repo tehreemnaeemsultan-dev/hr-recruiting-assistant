@@ -23,10 +23,8 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-        <CardDescription>
-          HR Recruiting Assistant — owner access only.
-        </CardDescription>
+        <CardTitle>Welcome back</CardTitle>
+        <CardDescription>Sign in to keep things moving.</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={formAction} className="flex flex-col gap-4">

@@ -39,7 +39,7 @@ export function RescoreJobButton({
       onClick={onClick}
       disabled={pending || disabled}
     >
-      {pending ? "Re-scoring…" : "Re-score all"}
+      {pending ? "Reviewing…" : "Re-review all"}
     </Button>
   );
 }

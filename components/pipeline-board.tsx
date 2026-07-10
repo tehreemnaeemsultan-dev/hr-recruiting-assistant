@@ -19,7 +19,6 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { moveApplicationStage } from "@/app/jobs/actions";
 import { STAGES, STAGE_LABELS, type Stage } from "@/lib/constants";
-import { Badge } from "@/components/ui/badge";
 import { ComposeEmailDialog } from "@/components/compose-email-dialog";
 import { ScheduleInterviewDialog } from "@/components/schedule-interview-dialog";
 
@@ -33,35 +32,83 @@ export interface BoardItem {
   stage: Stage;
 }
 
-function scoreVariant(score: number): "default" | "secondary" | "outline" {
-  if (score >= 70) return "default";
-  if (score >= 40) return "secondary";
-  return "outline";
+const STAGE_DOT: Record<Stage, string> = {
+  new: "bg-slate-400",
+  screening: "bg-blue-500",
+  interview_1: "bg-violet-500",
+  interview_2: "bg-indigo-500",
+  hired: "bg-emerald-500",
+  rejected: "bg-rose-500",
+};
+
+const AVATAR_COLORS = [
+  "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+  "bg-blue-500/15 text-blue-600 dark:text-blue-300",
+  "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+  "bg-amber-500/15 text-amber-600 dark:text-amber-300",
+  "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+  "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
+];
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return (
+    ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?"
+  );
+}
+function avatarColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function scoreChip(score: number): string {
+  if (score >= 70) return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300";
+  if (score >= 40) return "bg-amber-500/15 text-amber-600 dark:text-amber-300";
+  return "bg-rose-500/15 text-rose-600 dark:text-rose-300";
+}
+function sourceLabel(source: string): string {
+  return source === "linkedin" ? "LinkedIn" : "Uploaded CV";
 }
 
-/** Presentational card (also used in the drag overlay). */
 function Card({ item, dragging }: { item: BoardItem; dragging?: boolean }) {
   return (
     <div
-      className={`rounded-lg border bg-card p-3 shadow-xs ${
-        dragging ? "opacity-90 shadow-md" : ""
+      className={`bg-card rounded-xl border p-3 transition-shadow ${
+        dragging ? "shadow-lg ring-primary/20 ring-2" : "shadow-xs"
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          href={`/candidates/${item.candidateId}`}
-          className="text-sm font-medium hover:underline"
-          onPointerDown={(e) => e.stopPropagation()}
+      <div className="flex items-start gap-2.5">
+        <span
+          className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${avatarColor(
+            item.fullName,
+          )}`}
         >
-          {item.fullName}
-        </Link>
+          {initials(item.fullName)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <Link
+            href={`/candidates/${item.candidateId}`}
+            className="block truncate text-sm font-medium hover:underline"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {item.fullName}
+          </Link>
+          <div className="text-muted-foreground truncate text-xs">
+            {sourceLabel(item.source)}
+          </div>
+        </div>
         {item.score !== null ? (
-          <Badge variant={scoreVariant(item.score)}>{item.score}</Badge>
+          <span
+            className={`rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums ${scoreChip(
+              item.score,
+            )}`}
+          >
+            {item.score}
+          </span>
         ) : (
-          <Badge variant="outline">—</Badge>
+          <span className="text-muted-foreground text-xs">—</span>
         )}
       </div>
-      <div className="text-muted-foreground mt-1 text-xs">{item.source}</div>
     </div>
   );
 }
@@ -84,7 +131,6 @@ function DraggableCard({
       data-stage={item.stage}
       className={isDragging ? "opacity-40" : ""}
     >
-      {/* Drag handle = the card body */}
       <div
         {...listeners}
         {...attributes}
@@ -92,17 +138,16 @@ function DraggableCard({
       >
         <Card item={item} />
       </div>
-      {/* Simple, reliable stage control (works alongside drag) */}
       <select
-        aria-label="Change stage"
+        aria-label="Move to stage"
         data-testid={`stage-select-${item.applicationId}`}
         value={item.stage}
         onChange={(e) => onMove(item.applicationId, e.target.value as Stage)}
-        className="border-input bg-background mt-1 w-full rounded-md border px-2 py-1 text-xs"
+        className="text-muted-foreground hover:text-foreground mt-1.5 w-full cursor-pointer rounded-md border bg-transparent px-2 py-1 text-xs transition-colors"
       >
         {STAGES.map((s) => (
           <option key={s} value={s}>
-            {STAGE_LABELS[s]}
+            Move to {STAGE_LABELS[s]}
           </option>
         ))}
       </select>
@@ -121,23 +166,32 @@ function Column({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
-    <div className="flex w-52 shrink-0 flex-col">
-      <div className="mb-2 flex items-center justify-between px-1">
-        <span className="text-sm font-medium">{STAGE_LABELS[stage]}</span>
-        <span className="text-muted-foreground text-xs tabular-nums">
+    <div className="flex w-[15rem] shrink-0 flex-col">
+      <div className="mb-2 flex items-center gap-2 px-1">
+        <span className={`size-2 rounded-full ${STAGE_DOT[stage]}`} />
+        <span className="text-sm font-semibold">{STAGE_LABELS[stage]}</span>
+        <span className="bg-muted text-muted-foreground ml-auto rounded-full px-2 py-0.5 text-xs tabular-nums">
           {items.length}
         </span>
       </div>
       <div
         ref={setNodeRef}
         data-testid={`col-${stage}`}
-        className={`flex min-h-40 flex-1 flex-col gap-2 rounded-lg border border-dashed p-2 transition-colors ${
-          isOver ? "border-primary bg-muted/50" : "bg-muted/20"
+        className={`flex min-h-40 flex-1 flex-col gap-2 rounded-2xl border p-2 transition-colors ${
+          isOver
+            ? "border-primary/50 bg-primary/5"
+            : "bg-muted/30 border-transparent"
         }`}
       >
-        {items.map((item) => (
-          <DraggableCard key={item.applicationId} item={item} onMove={onMove} />
-        ))}
+        {items.length === 0 ? (
+          <div className="text-muted-foreground/60 flex h-24 items-center justify-center text-xs">
+            Drop here
+          </div>
+        ) : (
+          items.map((item) => (
+            <DraggableCard key={item.applicationId} item={item} onMove={onMove} />
+          ))
+        )}
       </div>
     </div>
   );
@@ -162,7 +216,6 @@ export function PipelineBoard({
     useSensor(KeyboardSensor),
   );
 
-  // Live updates via Supabase Realtime. Refetch on any change to this job.
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -202,7 +255,6 @@ export function PipelineBoard({
     };
   }, [jobId]);
 
-  // Shared move logic for both drag-and-drop and the stage dropdown.
   async function moveItem(applicationId: string, toStage: Stage) {
     const current = items.find((i) => i.applicationId === applicationId);
     if (!current || current.stage === toStage) return;
@@ -226,11 +278,7 @@ export function PipelineBoard({
     }
 
     toast.success(`${current.fullName} → ${STAGE_LABELS[toStage]}`);
-    // Wire the rejected stage to offer a rejection email (SPEC §7 Phase 3).
-    if (toStage === "rejected") {
-      setRejectPrompt({ ...current, stage: toStage });
-    }
-    // Wire interview stages to schedule a Google Meet interview (SPEC §7 Phase 4).
+    if (toStage === "rejected") setRejectPrompt({ ...current, stage: toStage });
     if (toStage === "interview_1" || toStage === "interview_2") {
       setInterviewPrompt({ ...current, stage: toStage });
     }
@@ -239,7 +287,6 @@ export function PipelineBoard({
   function onDragStart(e: DragStartEvent) {
     setActiveId(String(e.active.id));
   }
-
   function onDragEnd(e: DragEndEvent) {
     setActiveId(null);
     const { active, over } = e;

@@ -195,7 +195,7 @@ export function CandidateCard({
             onClick={onRescore}
             disabled={pending}
           >
-            {pending && !deleting ? "Scoring…" : "Re-score"}
+            {pending && !deleting ? "Reviewing…" : "Re-review"}
           </Button>
           <Button
             type="button"

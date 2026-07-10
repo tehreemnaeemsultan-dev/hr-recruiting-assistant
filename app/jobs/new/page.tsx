@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import { JobForm } from "@/components/job-form";
 import {
   Card,
@@ -23,30 +23,29 @@ export default async function NewJobPage() {
   if (!user) redirect("/login");
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader email={user.email} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
+    <AppShell email={user.email}>
+      <div className="mx-auto w-full max-w-2xl px-6 py-8 md:py-10">
         <div className="mb-6">
           <Link href="/" className="text-muted-foreground text-sm hover:underline">
-            ← Dashboard
+            ← Home
           </Link>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-            Create a job
+            Add a role
           </h1>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Job details</CardTitle>
+            <CardTitle className="text-base">Role details</CardTitle>
             <CardDescription>
-              Paste the job description and describe your ranking criteria in
-              plain language.
+              Add the role details and tell us what a great person looks like —
+              in plain language.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <JobForm />
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

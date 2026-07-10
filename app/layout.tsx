@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Red_Hat_Display, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 // Base font for the whole app. Bound to the `--font-sans` token that the theme
@@ -16,9 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HR Recruiting Assistant",
-  description:
-    "Private recruiting tool: rank CVs, manage the pipeline, and schedule interviews.",
+  title: "Mujtaba Hires",
+  description: "Find, review, and hire great people — beautifully simple.",
 };
 
 export default function RootLayout({
@@ -29,11 +29,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${redHatDisplay.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        {children}
-        <Toaster />
+      <body className="min-h-full">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
