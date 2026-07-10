@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# claude code local settings & temp files (may contain secrets)
+.claude/settings.local.json
+.claude/*.tmp.*
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
