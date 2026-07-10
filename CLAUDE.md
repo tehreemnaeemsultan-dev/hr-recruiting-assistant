@@ -48,8 +48,16 @@ clever. Do not build anything outside the current phase without the owner asking
   candidate, time zone **Asia/Karachi**). Moving a candidate to an interview stage
   on the board opens a time/duration dialog; results are stored in `interviews` and
   shown on the candidate detail page, with an `interview_scheduled` event.
-- Later phases: Apify cookieless actors (Phase 5). Exact Apify actors to be
-  recorded when chosen.
+- **LinkedIn sourcing (Phase 5):** Apify, **cookieless actors only** (SPEC §8.1).
+  Default actor **`harvestapi~linkedin-profile-search`** (no login/cookies; returns
+  full public profiles with a `maxItems` cap) — override with `APIFY_LINKEDIN_ACTOR`.
+  `lib/apify.ts` starts a run + normalizes profiles; `lib/sourcing.ts` ingests the
+  dataset into `sourced_profiles` (staging, needs-review). Results arrive via
+  `POST /api/apify/webhook` (verified with `APIFY_WEBHOOK_SECRET`) in production, or
+  by **polling** from `/source` locally (no public URL needed). Nothing enters a
+  role's pipeline until the owner clicks **Add to role** (creates a candidate +
+  application, then scores). **Never** cookie/session actors; **never** LinkedIn
+  messaging. Env: `APIFY_TOKEN`, `APIFY_WEBHOOK_SECRET`, `APIFY_LINKEDIN_ACTOR`.
 
 ## shadcn base-nova = Base UI (not Radix)
 

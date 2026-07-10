@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Settings, Plus, LogOut } from "lucide-react";
+import { LayoutGrid, Search, Settings, Plus, LogOut } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const NAV = [
   { href: "/", label: "Home", icon: LayoutGrid, match: (p: string) =>
       p === "/" || p.startsWith("/jobs") || p.startsWith("/candidates") },
+  { href: "/source", label: "Find people", icon: Search, match: (p: string) => p.startsWith("/source") },
   { href: "/settings/integrations", label: "Settings", icon: Settings, match: (p: string) => p.startsWith("/settings") },
 ];
 
