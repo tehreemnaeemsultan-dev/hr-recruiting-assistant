@@ -8,6 +8,7 @@ import {
   DragOverlay,
   PointerSensor,
   KeyboardSensor,
+  closestCenter,
   useSensor,
   useSensors,
   useDraggable,
@@ -37,6 +38,7 @@ function scoreVariant(score: number): "default" | "secondary" | "outline" {
   return "outline";
 }
 
+/** Presentational card (also used in the drag overlay). */
 function Card({ item, dragging }: { item: BoardItem; dragging?: boolean }) {
   return (
     <div
@@ -63,7 +65,13 @@ function Card({ item, dragging }: { item: BoardItem; dragging?: boolean }) {
   );
 }
 
-function DraggableCard({ item }: { item: BoardItem }) {
+function DraggableCard({
+  item,
+  onMove,
+}: {
+  item: BoardItem;
+  onMove: (applicationId: string, toStage: Stage) => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.applicationId,
     data: { stage: item.stage },
@@ -71,15 +79,32 @@ function DraggableCard({ item }: { item: BoardItem }) {
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={`cursor-grab touch-none active:cursor-grabbing ${
-        isDragging ? "opacity-40" : ""
-      }`}
       data-testid={`card-${item.applicationId}`}
       data-stage={item.stage}
+      className={isDragging ? "opacity-40" : ""}
     >
-      <Card item={item} />
+      {/* Drag handle = the card body */}
+      <div
+        {...listeners}
+        {...attributes}
+        className="cursor-grab touch-none active:cursor-grabbing"
+      >
+        <Card item={item} />
+      </div>
+      {/* Simple, reliable stage control (works alongside drag) */}
+      <select
+        aria-label="Change stage"
+        data-testid={`stage-select-${item.applicationId}`}
+        value={item.stage}
+        onChange={(e) => onMove(item.applicationId, e.target.value as Stage)}
+        className="border-input bg-background mt-1 w-full rounded-md border px-2 py-1 text-xs"
+      >
+        {STAGES.map((s) => (
+          <option key={s} value={s}>
+            {STAGE_LABELS[s]}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -87,13 +112,15 @@ function DraggableCard({ item }: { item: BoardItem }) {
 function Column({
   stage,
   items,
+  onMove,
 }: {
   stage: Stage;
   items: BoardItem[];
+  onMove: (applicationId: string, toStage: Stage) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
-    <div className="flex w-64 shrink-0 flex-col">
+    <div className="flex w-52 shrink-0 flex-col">
       <div className="mb-2 flex items-center justify-between px-1">
         <span className="text-sm font-medium">{STAGE_LABELS[stage]}</span>
         <span className="text-muted-foreground text-xs tabular-nums">
@@ -108,7 +135,7 @@ function Column({
         }`}
       >
         {items.map((item) => (
-          <DraggableCard key={item.applicationId} item={item} />
+          <DraggableCard key={item.applicationId} item={item} onMove={onMove} />
         ))}
       </div>
     </div>
@@ -126,7 +153,6 @@ export function PipelineBoard({
 }) {
   const [items, setItems] = useState<BoardItem[]>(initialItems);
   const [activeId, setActiveId] = useState<string | null>(null);
-  // When a candidate is dropped into "rejected", prompt to send the rejection email.
   const [rejectPrompt, setRejectPrompt] = useState<BoardItem | null>(null);
 
   const sensors = useSensors(
@@ -134,7 +160,7 @@ export function PipelineBoard({
     useSensor(KeyboardSensor),
   );
 
-  // Live updates via Supabase Realtime (SPEC §7 Phase 2). Refetch on any change.
+  // Live updates via Supabase Realtime. Refetch on any change to this job.
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -174,21 +200,12 @@ export function PipelineBoard({
     };
   }, [jobId]);
 
-  function onDragStart(e: DragStartEvent) {
-    setActiveId(String(e.active.id));
-  }
-
-  async function onDragEnd(e: DragEndEvent) {
-    setActiveId(null);
-    const { active, over } = e;
-    if (!over) return;
-    const applicationId = String(active.id);
-    const toStage = String(over.id) as Stage;
+  // Shared move logic for both drag-and-drop and the stage dropdown.
+  async function moveItem(applicationId: string, toStage: Stage) {
     const current = items.find((i) => i.applicationId === applicationId);
     if (!current || current.stage === toStage) return;
-
     const fromStage = current.stage;
-    // Optimistic move.
+
     setItems((prev) =>
       prev.map((i) =>
         i.applicationId === applicationId ? { ...i, stage: toStage } : i,
@@ -198,7 +215,6 @@ export function PipelineBoard({
     const res = await moveApplicationStage(applicationId, jobId, toStage);
     if (!res.ok) {
       toast.error(res.error);
-      // Revert.
       setItems((prev) =>
         prev.map((i) =>
           i.applicationId === applicationId ? { ...i, stage: fromStage } : i,
@@ -214,11 +230,23 @@ export function PipelineBoard({
     }
   }
 
+  function onDragStart(e: DragStartEvent) {
+    setActiveId(String(e.active.id));
+  }
+
+  function onDragEnd(e: DragEndEvent) {
+    setActiveId(null);
+    const { active, over } = e;
+    if (!over) return;
+    void moveItem(String(active.id), String(over.id) as Stage);
+  }
+
   const activeItem = items.find((i) => i.applicationId === activeId) ?? null;
 
   return (
     <DndContext
       sensors={sensors}
+      collisionDetection={closestCenter}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
     >
@@ -228,6 +256,7 @@ export function PipelineBoard({
             key={stage}
             stage={stage}
             items={items.filter((i) => i.stage === stage)}
+            onMove={moveItem}
           />
         ))}
       </div>
