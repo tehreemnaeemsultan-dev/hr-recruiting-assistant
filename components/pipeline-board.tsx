@@ -19,11 +19,13 @@ import { createClient } from "@/lib/supabase/client";
 import { moveApplicationStage } from "@/app/jobs/actions";
 import { STAGES, STAGE_LABELS, type Stage } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
+import { ComposeEmailDialog } from "@/components/compose-email-dialog";
 
 export interface BoardItem {
   applicationId: string;
   candidateId: string;
   fullName: string;
+  email: string | null;
   score: number | null;
   source: string;
   stage: Stage;
@@ -115,13 +117,17 @@ function Column({
 
 export function PipelineBoard({
   jobId,
+  jobTitle,
   initialItems,
 }: {
   jobId: string;
+  jobTitle: string;
   initialItems: BoardItem[];
 }) {
   const [items, setItems] = useState<BoardItem[]>(initialItems);
   const [activeId, setActiveId] = useState<string | null>(null);
+  // When a candidate is dropped into "rejected", prompt to send the rejection email.
+  const [rejectPrompt, setRejectPrompt] = useState<BoardItem | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -145,7 +151,7 @@ export function PipelineBoard({
           const { data } = await supabase
             .from("applications")
             .select(
-              "id, candidate_id, stage, score, candidates(full_name, source)",
+              "id, candidate_id, stage, score, candidates(full_name, source, email)",
             )
             .eq("job_id", jobId);
           if (!data) return;
@@ -154,6 +160,7 @@ export function PipelineBoard({
               applicationId: a.id,
               candidateId: a.candidate_id,
               fullName: a.candidates?.full_name ?? "Unknown candidate",
+              email: a.candidates?.email ?? null,
               score: a.score,
               source: a.candidates?.source ?? "upload",
               stage: a.stage as Stage,
@@ -197,10 +204,13 @@ export function PipelineBoard({
           i.applicationId === applicationId ? { ...i, stage: fromStage } : i,
         ),
       );
-    } else {
-      toast.success(
-        `${current.fullName} → ${STAGE_LABELS[toStage]}`,
-      );
+      return;
+    }
+
+    toast.success(`${current.fullName} → ${STAGE_LABELS[toStage]}`);
+    // Wire the rejected stage to offer a rejection email (SPEC §7 Phase 3).
+    if (toStage === "rejected") {
+      setRejectPrompt({ ...current, stage: toStage });
     }
   }
 
@@ -224,6 +234,22 @@ export function PipelineBoard({
       <DragOverlay>
         {activeItem ? <Card item={activeItem} dragging /> : null}
       </DragOverlay>
+
+      {rejectPrompt ? (
+        <ComposeEmailDialog
+          key={rejectPrompt.applicationId}
+          open
+          onOpenChange={(o) => {
+            if (!o) setRejectPrompt(null);
+          }}
+          applicationId={rejectPrompt.applicationId}
+          jobId={jobId}
+          candidateName={rejectPrompt.fullName}
+          candidateEmail={rejectPrompt.email}
+          jobTitle={jobTitle}
+          defaultTemplate="rejection"
+        />
+      ) : null}
     </DndContext>
   );
 }
@@ -233,5 +259,5 @@ interface RealtimeRow {
   candidate_id: string;
   stage: string;
   score: number | null;
-  candidates: { full_name: string; source: string } | null;
+  candidates: { full_name: string; source: string; email: string | null } | null;
 }

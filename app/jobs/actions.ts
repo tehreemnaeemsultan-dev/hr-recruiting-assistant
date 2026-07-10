@@ -7,6 +7,7 @@ import { createAdminClient, RESUMES_BUCKET } from "@/lib/supabase/admin";
 import { extractPdfText } from "@/lib/pdf";
 import { parseCandidateFields } from "@/lib/parse";
 import { scoreCandidate, isScoringConfigured } from "@/lib/scoring";
+import { sendGmail } from "@/lib/google";
 import type { ParsedCandidate } from "@/lib/types";
 import { STAGES, type Stage } from "@/lib/constants";
 
@@ -443,4 +444,66 @@ export async function updateApplicationNotes(
 
   revalidatePath(`/jobs/${jobId}`);
   return { ok: true };
+}
+
+// --- Email (Phase 3, via Gmail) ------------------------------------------
+
+function bodyToHtml(text: string): string {
+  const esc = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;">${esc.replace(
+    /\n/g,
+    "<br>",
+  )}</div>`;
+}
+
+/** Send an email to a candidate via Gmail; log it to `emails` + an `events` row. */
+export async function sendCandidateEmail(
+  applicationId: string,
+  jobId: string,
+  input: { to: string; subject: string; body: string },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await requireUser();
+  if (!supabase) return { ok: false, error: "Not authenticated." };
+
+  const to = input.to?.trim();
+  if (!to) return { ok: false, error: "Candidate has no email address." };
+  if (!input.subject.trim()) return { ok: false, error: "Subject is required." };
+
+  try {
+    const sent = await sendGmail(supabase, {
+      to,
+      subject: input.subject,
+      html: bodyToHtml(input.body),
+    });
+    await supabase.from("emails").insert({
+      application_id: applicationId,
+      to_address: to,
+      subject: input.subject,
+      body: input.body,
+      provider: "google",
+      status: "sent",
+      provider_message_id: sent.id,
+    });
+    await supabase.from("events").insert({
+      application_id: applicationId,
+      type: "email_sent",
+      payload: { to, subject: input.subject, provider_message_id: sent.id },
+    });
+    revalidatePath(`/jobs/${jobId}`);
+    return { ok: true };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Failed to send email.";
+    await supabase.from("emails").insert({
+      application_id: applicationId,
+      to_address: to,
+      subject: input.subject,
+      body: input.body,
+      provider: "google",
+      status: "failed",
+    });
+    return { ok: false, error: msg };
+  }
 }

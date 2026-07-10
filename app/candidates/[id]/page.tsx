@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, RESUMES_BUCKET } from "@/lib/supabase/admin";
 import { AppHeader } from "@/components/app-header";
 import { ApplicationNotes } from "@/components/application-notes";
+import { ComposeEmailDialog } from "@/components/compose-email-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -139,9 +140,18 @@ export default async function CandidatePage({
                       >
                         {a.jobs?.title ?? "Unknown job"}
                       </Link>
-                      <Badge variant={a.score !== null ? "default" : "outline"}>
-                        {a.score !== null ? a.score : "unscored"}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={a.score !== null ? "default" : "outline"}>
+                          {a.score !== null ? a.score : "unscored"}
+                        </Badge>
+                        <ComposeEmailDialog
+                          applicationId={a.id}
+                          jobId={a.job_id}
+                          candidateName={candidate.full_name}
+                          candidateEmail={candidate.email}
+                          jobTitle={a.jobs?.title ?? "this role"}
+                        />
+                      </div>
                     </div>
                     <ApplicationNotes
                       applicationId={a.id}

@@ -10,7 +10,7 @@ interface BoardRow {
   candidate_id: string;
   stage: string;
   score: number | null;
-  candidates: { full_name: string; source: string } | null;
+  candidates: { full_name: string; source: string; email: string | null } | null;
 }
 
 export default async function BoardPage({
@@ -34,7 +34,9 @@ export default async function BoardPage({
 
   const { data: rows } = await supabase
     .from("applications")
-    .select("id, candidate_id, stage, score, candidates(full_name, source)")
+    .select(
+      "id, candidate_id, stage, score, candidates(full_name, source, email)",
+    )
     .eq("job_id", id);
 
   const items: BoardItem[] = ((rows ?? []) as unknown as BoardRow[]).map(
@@ -42,6 +44,7 @@ export default async function BoardPage({
       applicationId: a.id,
       candidateId: a.candidate_id,
       fullName: a.candidates?.full_name ?? "Unknown candidate",
+      email: a.candidates?.email ?? null,
       score: a.score,
       source: a.candidates?.source ?? "upload",
       stage: a.stage as Stage,
@@ -76,7 +79,11 @@ export default async function BoardPage({
             to populate the board.
           </p>
         ) : (
-          <PipelineBoard jobId={job.id} initialItems={items} />
+          <PipelineBoard
+            jobId={job.id}
+            jobTitle={job.title}
+            initialItems={items}
+          />
         )}
       </main>
     </div>

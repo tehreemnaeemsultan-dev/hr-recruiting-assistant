@@ -33,8 +33,17 @@ clever. Do not build anything outside the current phase without the owner asking
   only scoring secret.
 - **PDF text extraction:** **`unpdf`** (serverless-friendly, no native deps) —
   `lib/pdf.ts`.
-- Later phases: Zoho Mail (Phase 3), Google Calendar (Phase 4), Apify cookieless
-  actors (Phase 5). Exact Apify actors to be recorded here when chosen.
+- **Email (Phase 3) + Calendar (Phase 4): Google**, one OAuth app for both.
+  **Owner-approved deviation from SPEC §2** (email was locked to Zoho); switched
+  to Gmail on 2026-07-10 to consolidate with the Google Calendar phase. Email
+  sends via the Gmail API (`lib/google.ts`, `sendGmail`). OAuth flow:
+  `/api/oauth/google/start` + `/api/oauth/google/callback`. Scopes requested up
+  front: `openid`, `userinfo.email`, `gmail.send`, `calendar.events`.
+- **OAuth tokens** stored in `integration_tokens` (one row per provider),
+  **encrypted at rest** with AES-256-GCM (`lib/crypto.ts`, `TOKEN_ENCRYPTION_KEY`).
+  Never logged.
+- Later phases: Google Calendar (Phase 4 — reuses the same Google connection),
+  Apify cookieless actors (Phase 5). Exact Apify actors to be recorded when chosen.
 
 ## shadcn base-nova = Base UI (not Radix)
 
