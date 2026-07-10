@@ -40,6 +40,9 @@ yarn-error.log*
 .claude/settings.local.json
 .claude/*.tmp.*
 
+# local UI reference screenshots (not part of the app)
+/example screenshots/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

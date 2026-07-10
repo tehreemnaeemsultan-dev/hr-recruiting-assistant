@@ -1,24 +1,78 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Search, BarChart3, Settings, Plus, LogOut } from "lucide-react";
+import {
+  LayoutGrid,
+  Search,
+  BarChart3,
+  Settings,
+  Plus,
+  LogOut,
+  Menu,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { cn } from "@/lib/utils";
 
-const NAV = [
-  { href: "/", label: "Home", icon: LayoutGrid, match: (p: string) =>
-      p === "/" || p.startsWith("/jobs") || p.startsWith("/candidates") },
-  { href: "/source", label: "Find people", icon: Search, match: (p: string) => p.startsWith("/source") },
-  { href: "/analytics", label: "Analytics", icon: BarChart3, match: (p: string) => p.startsWith("/analytics") },
-  { href: "/settings/integrations", label: "Settings", icon: Settings, match: (p: string) => p.startsWith("/settings") },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  match: (p: string) => boolean;
+}
+
+const SECTIONS: { title: string; items: NavItem[] }[] = [
+  {
+    title: "Menu",
+    items: [
+      {
+        href: "/",
+        label: "Dashboard",
+        icon: LayoutGrid,
+        match: (p) =>
+          p === "/" || p.startsWith("/jobs") || p.startsWith("/candidates"),
+      },
+      {
+        href: "/analytics",
+        label: "Analytics",
+        icon: BarChart3,
+        match: (p) => p.startsWith("/analytics"),
+      },
+    ],
+  },
+  {
+    title: "Recruiting",
+    items: [
+      {
+        href: "/source",
+        label: "Find people",
+        icon: Search,
+        match: (p) => p.startsWith("/source"),
+      },
+    ],
+  },
+  {
+    title: "Workspace",
+    items: [
+      {
+        href: "/settings/integrations",
+        label: "Settings",
+        icon: Settings,
+        match: (p) => p.startsWith("/settings"),
+      },
+    ],
+  },
 ];
 
-function Brand() {
+function Brand({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <Link href="/" className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#3a5ce8] to-[#1e40c4] text-sm font-bold text-white shadow-sm">
+    <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5">
+      <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-sm font-bold text-white shadow-md shadow-[#3a5ce8]/30">
         MH
       </span>
       <span className="text-[15px] font-semibold tracking-tight">
@@ -28,28 +82,120 @@ function Brand() {
   );
 }
 
-function NavLinks({ pathname }: { pathname: string }) {
+function NavLinks({
+  pathname,
+  onNavigate,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+}) {
   return (
-    <nav className="flex flex-col gap-1">
-      {NAV.map((item) => {
-        const active = item.match(pathname);
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-            }`}
-          >
-            <Icon className="size-4" />
-            {item.label}
-          </Link>
-        );
-      })}
+    <nav className="flex flex-col gap-6">
+      {SECTIONS.map((section) => (
+        <div key={section.title}>
+          <p className="text-muted-foreground/70 mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider">
+            {section.title}
+          </p>
+          <div className="flex flex-col gap-1">
+            {section.items.map((item) => {
+              const active = item.match(pathname);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                    active
+                      ? "bg-gradient-to-r from-[#5b6ff0] to-[#3a5ce8] text-white shadow-md shadow-[#3a5ce8]/25"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "size-[18px] transition-colors",
+                      active
+                        ? "text-white"
+                        : "text-muted-foreground group-hover:text-foreground",
+                    )}
+                  />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </nav>
+  );
+}
+
+function initials(email?: string | null) {
+  if (!email) return "MH";
+  const name = email.split("@")[0];
+  const parts = name.split(/[._-]+/).filter(Boolean);
+  return (
+    ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() ||
+    name.slice(0, 2).toUpperCase()
+  );
+}
+
+function SidebarBody({
+  pathname,
+  email,
+  onNavigate,
+}: {
+  pathname: string;
+  email?: string | null;
+  onNavigate?: () => void;
+}) {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="px-1 py-2">
+        <Brand onNavigate={onNavigate} />
+      </div>
+
+      <div className="mt-5">
+        <Button
+          render={<Link href="/jobs/new" />}
+          nativeButton={false}
+          onClick={onNavigate}
+          className="h-10 w-full justify-center gap-2 rounded-xl"
+        >
+          <Plus className="size-4" />
+          New role
+        </Button>
+      </div>
+
+      <div className="mt-7 flex-1 overflow-y-auto">
+        <NavLinks pathname={pathname} onNavigate={onNavigate} />
+      </div>
+
+      <div className="border-sidebar-border mt-4 flex items-center gap-2.5 border-t pt-4">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-xs font-semibold text-white">
+          {initials(email)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-medium">
+            {email?.split("@")[0] ?? "Account"}
+          </div>
+          <div className="text-muted-foreground truncate text-xs">
+            {email ?? "Signed in"}
+          </div>
+        </div>
+        <form action={signOut}>
+          <Button
+            type="submit"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Sign out"
+          >
+            <LogOut />
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -61,68 +207,71 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="flex min-h-svh">
       {/* Desktop sidebar */}
       <aside className="bg-sidebar text-sidebar-foreground border-sidebar-border sticky top-0 hidden h-svh w-64 shrink-0 flex-col border-r p-4 md:flex">
-        <div className="px-1 py-2">
-          <Brand />
-        </div>
-
-        <div className="mt-4">
-          <Button
-            render={<Link href="/jobs/new" />} nativeButton={false}
-            className="w-full justify-start gap-2"
-          >
-            <Plus className="size-4" />
-            New role
-          </Button>
-        </div>
-
-        <div className="mt-6">
-          <NavLinks pathname={pathname} />
-        </div>
-
-        <div className="flex-1" />
-
-        <div className="border-sidebar-border flex items-center justify-between gap-2 border-t pt-3">
-          <div className="min-w-0">
-            <div className="text-muted-foreground truncate text-xs">
-              {email ?? "Signed in"}
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <ThemeToggle />
-            <form action={signOut}>
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Sign out"
-              >
-                <LogOut />
-              </Button>
-            </form>
-          </div>
-        </div>
+        <SidebarBody pathname={pathname} email={email} />
       </aside>
+
+      {/* Mobile drawer */}
+      {mobileOpen ? (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="animate-in fade-in absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="bg-sidebar text-sidebar-foreground animate-in slide-in-from-left absolute inset-y-0 left-0 flex w-72 flex-col border-r p-4 shadow-2xl duration-300">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close menu"
+              className="hover:bg-sidebar-accent absolute top-4 right-4 flex size-8 items-center justify-center rounded-lg"
+            >
+              <X className="size-4" />
+            </button>
+            <SidebarBody
+              pathname={pathname}
+              email={email}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          </aside>
+        </div>
+      ) : null}
 
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile top bar */}
-        <header className="bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 flex items-center justify-between gap-2 border-b px-4 py-3 backdrop-blur md:hidden">
-          <Brand />
-          <div className="flex items-center gap-1">
-            <Button render={<Link href="/jobs/new" />} nativeButton={false} size="sm" className="gap-1">
-              <Plus className="size-4" /> New
+        {/* Top header */}
+        <header className="bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30 flex h-16 items-center justify-between gap-2 border-b px-4 backdrop-blur md:px-6">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+              className="hover:bg-muted flex size-9 items-center justify-center rounded-lg md:hidden"
+            >
+              <Menu className="size-5" />
+            </button>
+            <div className="md:hidden">
+              <Brand />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Button
+              render={<Link href="/jobs/new" />}
+              nativeButton={false}
+              size="sm"
+              className="hidden gap-1.5 rounded-lg sm:inline-flex"
+            >
+              <Plus className="size-4" /> New role
             </Button>
             <ThemeToggle />
-            <form action={signOut}>
-              <Button type="submit" variant="ghost" size="icon-sm" aria-label="Sign out">
-                <LogOut />
-              </Button>
-            </form>
+            <span className="ml-1 hidden size-9 items-center justify-center rounded-full bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-xs font-semibold text-white md:flex">
+              {initials(email)}
+            </span>
           </div>
         </header>
 

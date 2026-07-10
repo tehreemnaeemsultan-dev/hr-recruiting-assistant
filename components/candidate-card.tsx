@@ -29,10 +29,12 @@ export interface CandidateCardData {
   rank: number;
 }
 
-function scoreVariant(score: number): "default" | "secondary" | "outline" {
-  if (score >= 70) return "default";
-  if (score >= 40) return "secondary";
-  return "outline";
+function scoreCircle(score: number): string {
+  if (score >= 70)
+    return "bg-emerald-500/15 text-emerald-600 ring-emerald-500/25 dark:text-emerald-300";
+  if (score >= 40)
+    return "bg-amber-500/15 text-amber-600 ring-amber-500/25 dark:text-amber-300";
+  return "bg-rose-500/15 text-rose-600 ring-rose-500/25 dark:text-rose-300";
 }
 
 function recommendationVariant(
@@ -112,9 +114,13 @@ export function CandidateCard({
               </Badge>
             ) : null}
             {data.score !== null ? (
-              <Badge variant={scoreVariant(data.score)} className="text-sm">
+              <span
+                className={`flex size-11 items-center justify-center rounded-full text-sm font-bold tabular-nums ring-1 ${scoreCircle(
+                  data.score,
+                )}`}
+              >
                 {data.score}
-              </Badge>
+              </span>
             ) : (
               <Badge variant="outline">unscored</Badge>
             )}

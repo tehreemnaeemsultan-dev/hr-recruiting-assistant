@@ -133,4 +133,102 @@
   html {
     @apply font-sans;
   }
+  /* Slim, unobtrusive scrollbars that match the theme. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--muted-foreground) 50%, transparent);
+  }
+  ::selection {
+    background-color: color-mix(in oklch, var(--primary) 24%, transparent);
+  }
+}
+
+/* ==========================================================================
+   Gradient stat cards (the colorful hero tiles). Each variant sets a two-stop
+   gradient + a matching soft shadow. White foreground reads on all of them.
+   The decorative corner blob is drawn by `.stat-blob` inside the component.
+   ========================================================================== */
+@layer components {
+  .stat-card {
+    color: white;
+    border: none;
+    box-shadow:
+      0 10px 24px -12px var(--stat-shadow, transparent),
+      0 2px 6px -2px rgb(0 0 0 / 0.08);
+    background-image: linear-gradient(135deg, var(--stat-from), var(--stat-to));
+  }
+  .stat-violet {
+    --stat-from: oklch(0.58 0.2 285);
+    --stat-to: oklch(0.46 0.21 278);
+    --stat-shadow: oklch(0.52 0.2 282 / 0.55);
+  }
+  .stat-orange {
+    --stat-from: oklch(0.75 0.16 55);
+    --stat-to: oklch(0.66 0.18 40);
+    --stat-shadow: oklch(0.7 0.17 48 / 0.5);
+  }
+  .stat-green {
+    --stat-from: oklch(0.72 0.16 160);
+    --stat-to: oklch(0.62 0.15 165);
+    --stat-shadow: oklch(0.67 0.16 162 / 0.5);
+  }
+  .stat-cyan {
+    --stat-from: oklch(0.72 0.12 220);
+    --stat-to: oklch(0.62 0.14 235);
+    --stat-shadow: oklch(0.67 0.13 228 / 0.5);
+  }
+  .stat-rose {
+    --stat-from: oklch(0.68 0.19 15);
+    --stat-to: oklch(0.6 0.2 10);
+    --stat-shadow: oklch(0.64 0.19 12 / 0.5);
+  }
+}
+
+/* Reusable elevated surface used across pages for consistency. */
+@utility surface {
+  @apply rounded-2xl border bg-card;
+}
+
+/* Stagger helper: children fade/slide in sequentially. Pair with
+   `animate-in fade-in slide-in-from-bottom-2` from tw-animate-css. */
+.stagger > * {
+  animation: enter 0.5s both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.07s; }
+.stagger > *:nth-child(3) { animation-delay: 0.12s; }
+.stagger > *:nth-child(4) { animation-delay: 0.17s; }
+.stagger > *:nth-child(5) { animation-delay: 0.22s; }
+.stagger > *:nth-child(6) { animation-delay: 0.27s; }
+.stagger > *:nth-child(7) { animation-delay: 0.32s; }
+.stagger > *:nth-child(8) { animation-delay: 0.37s; }
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > * {
+    animation: none;
+  }
 }

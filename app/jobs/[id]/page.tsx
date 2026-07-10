@@ -175,7 +175,7 @@ export default async function RolePeoplePage({
               No people yet — add some CVs above to get started.
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="stagger flex flex-col gap-3">
               {cards.map((c) => (
                 <CandidateCard key={c.applicationId} data={c} jobId={job.id} />
               ))}

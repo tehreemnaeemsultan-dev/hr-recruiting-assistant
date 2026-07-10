@@ -136,7 +136,7 @@ export default async function SourcePage() {
               you to add or skip.
             </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="stagger grid gap-3 sm:grid-cols-2">
               {profiles.map((p) => (
                 <SourcedProfileCard key={p.id} profile={p} jobs={jobList} />
               ))}

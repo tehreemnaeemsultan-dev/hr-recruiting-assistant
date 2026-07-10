@@ -41,6 +41,16 @@ const STAGE_DOT: Record<Stage, string> = {
   rejected: "bg-rose-500",
 };
 
+// Top-accent color for each column header.
+const STAGE_BORDER: Record<Stage, string> = {
+  new: "border-t-slate-400",
+  screening: "border-t-sky-500",
+  interview_1: "border-t-blue-500",
+  interview_2: "border-t-indigo-500",
+  hired: "border-t-emerald-500",
+  rejected: "border-t-rose-500",
+};
+
 const AVATAR_COLORS = [
   "bg-sky-500/15 text-sky-600 dark:text-sky-300",
   "bg-blue-500/15 text-blue-600 dark:text-blue-300",
@@ -73,13 +83,15 @@ function sourceLabel(source: string): string {
 function Card({ item, dragging }: { item: BoardItem; dragging?: boolean }) {
   return (
     <div
-      className={`bg-card rounded-xl border p-3 transition-shadow ${
-        dragging ? "shadow-lg ring-primary/20 ring-2" : "shadow-xs"
+      className={`bg-card rounded-xl border p-3 transition-all ${
+        dragging
+          ? "shadow-xl ring-primary/30 rotate-1 ring-2"
+          : "shadow-xs hover:-translate-y-0.5 hover:shadow-md"
       }`}
     >
       <div className="flex items-start gap-2.5">
         <span
-          className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${avatarColor(
+          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${avatarColor(
             item.fullName,
           )}`}
         >
@@ -99,14 +111,14 @@ function Card({ item, dragging }: { item: BoardItem; dragging?: boolean }) {
         </div>
         {item.score !== null ? (
           <span
-            className={`rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums ${scoreChip(
+            className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums ${scoreChip(
               item.score,
             )}`}
           >
             {item.score}
           </span>
         ) : (
-          <span className="text-muted-foreground text-xs">—</span>
+          <span className="text-muted-foreground/60 text-xs">—</span>
         )}
       </div>
     </div>
@@ -166,11 +178,13 @@ function Column({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
-    <div className="flex w-[15rem] shrink-0 flex-col">
-      <div className="mb-2 flex items-center gap-2 px-1">
+    <div className="flex w-[16rem] shrink-0 flex-col">
+      <div
+        className={`mb-2 flex items-center gap-2 rounded-xl border border-t-[3px] bg-card px-3 py-2.5 ${STAGE_BORDER[stage]}`}
+      >
         <span className={`size-2 rounded-full ${STAGE_DOT[stage]}`} />
         <span className="text-sm font-semibold">{STAGE_LABELS[stage]}</span>
-        <span className="bg-muted text-muted-foreground ml-auto rounded-full px-2 py-0.5 text-xs tabular-nums">
+        <span className="bg-muted text-muted-foreground ml-auto rounded-full px-2 py-0.5 text-xs font-medium tabular-nums">
           {items.length}
         </span>
       </div>
