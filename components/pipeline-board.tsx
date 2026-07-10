@@ -21,6 +21,7 @@ import { moveApplicationStage } from "@/app/jobs/actions";
 import { STAGES, STAGE_LABELS, type Stage } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { ComposeEmailDialog } from "@/components/compose-email-dialog";
+import { ScheduleInterviewDialog } from "@/components/schedule-interview-dialog";
 
 export interface BoardItem {
   applicationId: string;
@@ -154,6 +155,7 @@ export function PipelineBoard({
   const [items, setItems] = useState<BoardItem[]>(initialItems);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [rejectPrompt, setRejectPrompt] = useState<BoardItem | null>(null);
+  const [interviewPrompt, setInterviewPrompt] = useState<BoardItem | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -228,6 +230,10 @@ export function PipelineBoard({
     if (toStage === "rejected") {
       setRejectPrompt({ ...current, stage: toStage });
     }
+    // Wire interview stages to schedule a Google Meet interview (SPEC §7 Phase 4).
+    if (toStage === "interview_1" || toStage === "interview_2") {
+      setInterviewPrompt({ ...current, stage: toStage });
+    }
   }
 
   function onDragStart(e: DragStartEvent) {
@@ -277,6 +283,19 @@ export function PipelineBoard({
           candidateEmail={rejectPrompt.email}
           jobTitle={jobTitle}
           defaultTemplate="rejection"
+        />
+      ) : null}
+
+      {interviewPrompt ? (
+        <ScheduleInterviewDialog
+          key={interviewPrompt.applicationId}
+          open
+          onOpenChange={(o) => {
+            if (!o) setInterviewPrompt(null);
+          }}
+          applicationId={interviewPrompt.applicationId}
+          jobId={jobId}
+          candidateName={interviewPrompt.fullName}
         />
       ) : null}
     </DndContext>

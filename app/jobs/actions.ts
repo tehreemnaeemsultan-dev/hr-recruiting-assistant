@@ -7,7 +7,7 @@ import { createAdminClient, RESUMES_BUCKET } from "@/lib/supabase/admin";
 import { extractPdfText } from "@/lib/pdf";
 import { parseCandidateFields } from "@/lib/parse";
 import { scoreCandidate, isScoringConfigured } from "@/lib/scoring";
-import { sendGmail } from "@/lib/google";
+import { sendGmail, createCalendarEvent } from "@/lib/google";
 import type { ParsedCandidate } from "@/lib/types";
 import { STAGES, type Stage } from "@/lib/constants";
 
@@ -505,5 +505,72 @@ export async function sendCandidateEmail(
       status: "failed",
     });
     return { ok: false, error: msg };
+  }
+}
+
+// --- Interview scheduling (Phase 4, Google Calendar + Meet) ---------------
+
+interface ScheduleJoinRow {
+  jobs: { title: string } | null;
+  candidates: { full_name: string; email: string | null } | null;
+}
+
+/** Create a Google Calendar event with a Meet link, invite the candidate, log it. */
+export async function scheduleInterview(
+  applicationId: string,
+  jobId: string,
+  input: { startLocal: string; endLocal: string },
+): Promise<
+  { ok: true; meetUrl: string | null } | { ok: false; error: string }
+> {
+  const supabase = await requireUser();
+  if (!supabase) return { ok: false, error: "Not authenticated." };
+
+  const { data } = await supabase
+    .from("applications")
+    .select("jobs(title), candidates(full_name, email)")
+    .eq("id", applicationId)
+    .single();
+  if (!data) return { ok: false, error: "Application not found." };
+
+  const row = data as unknown as ScheduleJoinRow;
+  const candName = row.candidates?.full_name ?? "Candidate";
+  const jobTitle = row.jobs?.title ?? "the role";
+
+  try {
+    const ev = await createCalendarEvent(supabase, {
+      summary: `Interview: ${candName} — ${jobTitle}`,
+      description: `Interview for the ${jobTitle} role, scheduled from the HR Recruiting Assistant.`,
+      startLocal: input.startLocal,
+      endLocal: input.endLocal,
+      attendeeEmail: row.candidates?.email ?? null,
+    });
+
+    // Asia/Karachi is a fixed +05:00 offset (no DST).
+    await supabase.from("interviews").insert({
+      application_id: applicationId,
+      google_event_id: ev.eventId,
+      meet_url: ev.meetUrl,
+      scheduled_start: `${input.startLocal}+05:00`,
+      scheduled_end: `${input.endLocal}+05:00`,
+      status: "scheduled",
+    });
+    await supabase.from("events").insert({
+      application_id: applicationId,
+      type: "interview_scheduled",
+      payload: {
+        google_event_id: ev.eventId,
+        meet_url: ev.meetUrl,
+        start: input.startLocal,
+      },
+    });
+
+    revalidatePath(`/jobs/${jobId}`);
+    return { ok: true, meetUrl: ev.meetUrl };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Failed to schedule interview.",
+    };
   }
 }

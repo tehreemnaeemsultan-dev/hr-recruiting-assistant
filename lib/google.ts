@@ -9,6 +9,9 @@ const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GMAIL_SEND_URL =
   "https://gmail.googleapis.com/gmail/v1/users/me/messages/send";
 const USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
+const CALENDAR_EVENTS_URL =
+  "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all";
+const INTERVIEW_TIME_ZONE = "Asia/Karachi"; // SPEC §8.3
 
 // One OAuth app covers Phase 3 (Gmail send) and Phase 4 (Calendar events).
 export const GOOGLE_SCOPES = [
@@ -263,4 +266,57 @@ export async function sendGmail(
   if (!res.ok) throw new Error(`Gmail send failed: ${await res.text()}`);
   const json = await res.json();
   return { id: json.id as string };
+}
+
+interface CalendarEntryPoint {
+  entryPointType?: string;
+  uri?: string;
+}
+
+/** Create a Google Calendar event with a Meet link and invite the attendee. */
+export async function createCalendarEvent(
+  supabase: SupabaseServer,
+  input: {
+    summary: string;
+    description?: string;
+    startLocal: string; // "YYYY-MM-DDTHH:MM:SS" wall-clock in Asia/Karachi
+    endLocal: string;
+    attendeeEmail?: string | null;
+  },
+): Promise<{ eventId: string; meetUrl: string | null; htmlLink: string | null }> {
+  const accessToken = await getValidAccessToken(supabase);
+
+  const body = {
+    summary: input.summary,
+    description: input.description ?? "",
+    start: { dateTime: input.startLocal, timeZone: INTERVIEW_TIME_ZONE },
+    end: { dateTime: input.endLocal, timeZone: INTERVIEW_TIME_ZONE },
+    attendees: input.attendeeEmail ? [{ email: input.attendeeEmail }] : [],
+    conferenceData: {
+      createRequest: {
+        requestId: crypto.randomUUID(),
+        conferenceSolutionKey: { type: "hangoutsMeet" },
+      },
+    },
+  };
+
+  const res = await fetch(CALENDAR_EVENTS_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`Calendar event failed: ${await res.text()}`);
+
+  const json = await res.json();
+  const meetUrl: string | null =
+    json.hangoutLink ??
+    (json.conferenceData?.entryPoints as CalendarEntryPoint[] | undefined)?.find(
+      (e) => e.entryPointType === "video",
+    )?.uri ??
+    null;
+
+  return { eventId: json.id as string, meetUrl, htmlLink: json.htmlLink ?? null };
 }

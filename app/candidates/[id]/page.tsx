@@ -5,6 +5,7 @@ import { createAdminClient, RESUMES_BUCKET } from "@/lib/supabase/admin";
 import { AppHeader } from "@/components/app-header";
 import { ApplicationNotes } from "@/components/application-notes";
 import { ComposeEmailDialog } from "@/components/compose-email-dialog";
+import { ScheduleInterviewDialog } from "@/components/schedule-interview-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -32,6 +33,11 @@ interface CandidateRow {
     score_summary: string | null;
     notes: string | null;
     jobs: { id: string; title: string } | null;
+    interviews: {
+      meet_url: string | null;
+      scheduled_start: string | null;
+      status: string;
+    }[];
   }[];
 }
 
@@ -50,7 +56,7 @@ export default async function CandidatePage({
   const { data } = await supabase
     .from("candidates")
     .select(
-      "*, applications(id, score, score_summary, notes, job_id, jobs(id, title))",
+      "*, applications(id, score, score_summary, notes, job_id, jobs(id, title), interviews(meet_url, scheduled_start, status))",
     )
     .eq("id", id)
     .single();
@@ -140,19 +146,55 @@ export default async function CandidatePage({
                       >
                         {a.jobs?.title ?? "Unknown job"}
                       </Link>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={a.score !== null ? "default" : "outline"}>
-                          {a.score !== null ? a.score : "unscored"}
-                        </Badge>
-                        <ComposeEmailDialog
-                          applicationId={a.id}
-                          jobId={a.job_id}
-                          candidateName={candidate.full_name}
-                          candidateEmail={candidate.email}
-                          jobTitle={a.jobs?.title ?? "this role"}
-                        />
-                      </div>
+                      <Badge variant={a.score !== null ? "default" : "outline"}>
+                        {a.score !== null ? a.score : "unscored"}
+                      </Badge>
                     </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <ComposeEmailDialog
+                        applicationId={a.id}
+                        jobId={a.job_id}
+                        candidateName={candidate.full_name}
+                        candidateEmail={candidate.email}
+                        jobTitle={a.jobs?.title ?? "this role"}
+                      />
+                      <ScheduleInterviewDialog
+                        applicationId={a.id}
+                        jobId={a.job_id}
+                        candidateName={candidate.full_name}
+                      />
+                    </div>
+
+                    {a.interviews.length > 0 ? (
+                      <div className="flex flex-col gap-1 rounded-md border bg-muted/30 p-2 text-xs">
+                        {a.interviews.map((iv, i) => (
+                          <div key={i} className="flex items-center justify-between gap-2">
+                            <span className="text-muted-foreground">
+                              {iv.scheduled_start
+                                ? new Date(iv.scheduled_start).toLocaleString("en-GB", {
+                                    timeZone: "Asia/Karachi",
+                                    dateStyle: "medium",
+                                    timeStyle: "short",
+                                  }) + " PKT"
+                                : "Interview"}{" "}
+                              · {iv.status}
+                            </span>
+                            {iv.meet_url ? (
+                              <a
+                                href={iv.meet_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary underline underline-offset-2"
+                              >
+                                Join Meet
+                              </a>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+
                     <ApplicationNotes
                       applicationId={a.id}
                       jobId={a.job_id}
