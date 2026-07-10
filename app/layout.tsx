@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Red_Hat_Display, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 // Base font for the whole app. Bound to the `--font-sans` token that the theme
-// (globals.css) and all shadcn components resolve `font-sans` from.
-const redHatDisplay = Red_Hat_Display({
+// (globals.css) and all shadcn components resolve `font-sans` from. Geist is a
+// clean neutral grotesque; it pairs with Geist Mono (below) for the tabular
+// figures used on metrics — the "Atlas" data-cockpit identity.
+const geistSans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
 });
@@ -30,7 +32,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${redHatDisplay.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <ThemeProvider

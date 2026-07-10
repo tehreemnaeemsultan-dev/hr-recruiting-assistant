@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Search, Settings, Plus, LogOut } from "lucide-react";
+import { LayoutGrid, Search, BarChart3, Settings, Plus, LogOut } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -11,13 +11,14 @@ const NAV = [
   { href: "/", label: "Home", icon: LayoutGrid, match: (p: string) =>
       p === "/" || p.startsWith("/jobs") || p.startsWith("/candidates") },
   { href: "/source", label: "Find people", icon: Search, match: (p: string) => p.startsWith("/source") },
+  { href: "/analytics", label: "Analytics", icon: BarChart3, match: (p: string) => p.startsWith("/analytics") },
   { href: "/settings/integrations", label: "Settings", icon: Settings, match: (p: string) => p.startsWith("/settings") },
 ];
 
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 text-sm font-bold text-white shadow-sm">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#3a5ce8] to-[#1e40c4] text-sm font-bold text-white shadow-sm">
         MH
       </span>
       <span className="text-[15px] font-semibold tracking-tight">

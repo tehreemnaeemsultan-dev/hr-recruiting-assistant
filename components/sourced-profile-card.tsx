@@ -19,7 +19,7 @@ export interface SourcedProfileData {
 }
 
 const AVATAR_COLORS = [
-  "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+  "bg-sky-500/15 text-sky-600 dark:text-sky-300",
   "bg-blue-500/15 text-blue-600 dark:text-blue-300",
   "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
   "bg-amber-500/15 text-amber-600 dark:text-amber-300",

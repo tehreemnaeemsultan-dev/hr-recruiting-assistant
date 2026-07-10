@@ -109,7 +109,7 @@ export default async function HomePage() {
                     <Icon className="size-[18px]" />
                   </span>
                 </div>
-                <div className="mt-3 text-3xl font-semibold tracking-tight">
+                <div className="mt-3 font-mono text-3xl font-semibold tabular-nums">
                   {s.value ?? "—"}
                 </div>
               </div>
