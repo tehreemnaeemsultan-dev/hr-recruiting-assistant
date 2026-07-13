@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutGrid,
+  Columns3,
+  LayoutDashboard,
   Search,
   BarChart3,
   Settings,
@@ -32,10 +33,16 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
     items: [
       {
         href: "/",
-        label: "Dashboard",
-        icon: LayoutGrid,
+        label: "Board",
+        icon: Columns3,
         match: (p) =>
           p === "/" || p.startsWith("/jobs") || p.startsWith("/candidates"),
+      },
+      {
+        href: "/overview",
+        label: "Overview",
+        icon: LayoutDashboard,
+        match: (p) => p.startsWith("/overview"),
       },
       {
         href: "/analytics",
