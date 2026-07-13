@@ -54,7 +54,7 @@ export default async function BoardHomePage({
   // Empty state — no roles yet.
   if (jobsList.length === 0) {
     return (
-      <AppShell email={user.email}>
+      <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
         <div className="page-enter mx-auto w-full max-w-2xl px-5 py-16 md:px-6">
           <div className="surface flex flex-col items-center justify-center border-dashed px-6 py-16 text-center">
             <span className="bg-brand-muted text-brand mb-4 flex size-14 items-center justify-center rounded-2xl">
@@ -102,7 +102,7 @@ export default async function BoardHomePage({
     }));
 
   return (
-    <AppShell email={user.email}>
+    <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
       <div className="page-enter flex min-w-0 flex-col px-5 py-5 md:px-6">
         <PipelineBoard
           key={selected.id}

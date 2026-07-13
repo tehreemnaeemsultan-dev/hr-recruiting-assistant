@@ -88,7 +88,7 @@ export default async function HomePage() {
   const name = user.email?.split("@")[0] ?? "there";
 
   return (
-    <AppShell email={user.email}>
+    <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
       <div className="page-enter mx-auto w-full max-w-6xl px-5 py-7 md:px-6 md:py-9">
         {/* Hero */}
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">

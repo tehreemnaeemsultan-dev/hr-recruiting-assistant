@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { UserSearch, Users, Info } from "lucide-react";
+import { Users, Info } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isApifyConfigured } from "@/lib/apify";
 import { AppShell } from "@/components/app-shell";
@@ -9,6 +9,7 @@ import {
   SourcedProfileCard,
   type SourcedProfileData,
 } from "@/components/sourced-profile-card";
+import { LinkedInIcon } from "@/components/brand-icons";
 import {
   Card,
   CardContent,
@@ -77,7 +78,7 @@ export default async function SourcePage() {
   const jobList = (jobs ?? []) as { id: string; title: string }[];
 
   return (
-    <AppShell email={user.email}>
+    <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
       <div className="page-enter mx-auto w-full max-w-4xl px-5 py-7 md:px-6 md:py-9">
         <div className="mb-6">
           <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
@@ -100,9 +101,7 @@ export default async function SourcePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-[#0a66c2]/10 text-[#0a66c2]">
-                <UserSearch className="size-4" />
-              </span>
+              <LinkedInIcon className="size-6 rounded-md" />
               New search
             </CardTitle>
           </CardHeader>

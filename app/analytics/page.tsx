@@ -162,7 +162,7 @@ export default async function AnalyticsPage() {
     }));
 
   return (
-    <AppShell email={user.email}>
+    <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
       <div className="page-enter mx-auto w-full max-w-6xl px-5 py-7 md:px-6 md:py-9">
         <div className="mb-7">
           <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">

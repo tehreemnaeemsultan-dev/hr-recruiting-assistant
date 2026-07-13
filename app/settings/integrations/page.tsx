@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
-import { Mail, Check, LogOut, ShieldAlert } from "lucide-react";
+import { Check, LogOut, ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getGoogleConnection, isGoogleConfigured } from "@/lib/google";
 import { signOut } from "@/app/auth/actions";
 import { AppShell } from "@/components/app-shell";
+import { GmailIcon } from "@/components/brand-icons";
+import { ProfilePhotoForm } from "@/components/profile-photo-form";
 import { DisconnectGoogleButton } from "@/components/disconnect-google-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +46,7 @@ export default async function IntegrationsPage({
   const google = configured ? await getGoogleConnection(supabase) : null;
 
   return (
-    <AppShell email={user.email}>
+    <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
       <div className="page-enter mx-auto w-full max-w-2xl px-5 py-7 md:px-6 md:py-9">
         <div className="mb-7">
           <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
@@ -73,9 +75,7 @@ export default async function IntegrationsPage({
           Connected services
         </h2>
         <div className="surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#4285F4]/10 text-[#4285F4]">
-            <Mail className="size-5" />
-          </span>
+          <GmailIcon className="size-11" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold">Google</h3>
@@ -116,19 +116,24 @@ export default async function IntegrationsPage({
         <h2 className="text-text-tertiary mb-2 mt-8 text-xs font-semibold uppercase tracking-wider">
           Account
         </h2>
-        <div className="surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
-          <span className="avatar-gradient flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
-            {(user.email ?? "?").slice(0, 2).toUpperCase()}
-          </span>
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold">{user.email}</h3>
-            <p className="text-text-secondary text-sm">Signed in</p>
+        <div className="surface flex flex-col gap-5 p-5">
+          <ProfilePhotoForm
+            currentUrl={
+              (user.user_metadata?.avatar_url as string | undefined) ?? null
+            }
+            email={user.email}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+            <div className="min-w-0">
+              <h3 className="truncate font-semibold">{user.email}</h3>
+              <p className="text-text-secondary text-sm">Signed in</p>
+            </div>
+            <form action={signOut} className="shrink-0">
+              <Button type="submit" variant="outline" className="gap-2">
+                <LogOut className="size-4" /> Sign out
+              </Button>
+            </form>
           </div>
-          <form action={signOut} className="shrink-0">
-            <Button type="submit" variant="outline" className="gap-2">
-              <LogOut className="size-4" /> Sign out
-            </Button>
-          </form>
         </div>
 
         {/* Danger zone */}

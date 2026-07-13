@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Search,
   BarChart3,
+  Mail,
   Settings,
   Plus,
   LogOut,
@@ -61,6 +62,12 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
         icon: Search,
         match: (p) => p.startsWith("/source"),
       },
+      {
+        href: "/emails",
+        label: "Emails",
+        icon: Mail,
+        match: (p) => p.startsWith("/emails"),
+      },
     ],
   },
   {
@@ -76,12 +83,27 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
   },
 ];
 
-function Brand({ onNavigate }: { onNavigate?: () => void }) {
+function Brand({
+  onNavigate,
+  avatarUrl,
+}: {
+  onNavigate?: () => void;
+  avatarUrl?: string | null;
+}) {
   return (
     <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5">
-      <span className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-[13px] font-bold text-white shadow-sm">
-        MH
-      </span>
+      {avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={avatarUrl}
+          alt=""
+          className="ring-border size-9 rounded-xl object-cover shadow-sm ring-1"
+        />
+      ) : (
+        <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-[13px] font-bold text-white shadow-sm">
+          MH
+        </span>
+      )}
       <span className="text-[15px] font-semibold tracking-tight">
         Mujtaba Hires
       </span>
@@ -155,16 +177,18 @@ function initials(email?: string | null) {
 function SidebarBody({
   pathname,
   email,
+  avatarUrl,
   onNavigate,
 }: {
   pathname: string;
   email?: string | null;
+  avatarUrl?: string | null;
   onNavigate?: () => void;
 }) {
   return (
     <div className="flex h-full flex-col">
       <div className="px-1 py-2">
-        <Brand onNavigate={onNavigate} />
+        <Brand onNavigate={onNavigate} avatarUrl={avatarUrl} />
       </div>
 
       <div className="mt-5">
@@ -184,9 +208,18 @@ function SidebarBody({
       </div>
 
       <div className="border-sidebar-border mt-4 flex items-center gap-2.5 border-t pt-4">
-        <span className="avatar-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-          {initials(email)}
-        </span>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            className="ring-border size-9 shrink-0 rounded-full object-cover ring-1"
+          />
+        ) : (
+          <span className="avatar-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+            {initials(email)}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium capitalize">
             {email?.split("@")[0] ?? "Account"}
@@ -212,9 +245,11 @@ function SidebarBody({
 
 export function AppShell({
   email,
+  avatarUrl,
   children,
 }: {
   email?: string | null;
+  avatarUrl?: string | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -224,7 +259,7 @@ export function AppShell({
     <div className="flex min-h-svh">
       {/* Desktop sidebar */}
       <aside className="bg-sidebar text-sidebar-foreground border-sidebar-border sticky top-0 hidden h-svh w-64 shrink-0 flex-col border-r p-4 md:flex">
-        <SidebarBody pathname={pathname} email={email} />
+        <SidebarBody pathname={pathname} email={email} avatarUrl={avatarUrl} />
       </aside>
 
       {/* Mobile drawer */}
@@ -246,6 +281,7 @@ export function AppShell({
             <SidebarBody
               pathname={pathname}
               email={email}
+              avatarUrl={avatarUrl}
               onNavigate={() => setMobileOpen(false)}
             />
           </aside>
@@ -280,9 +316,18 @@ export function AppShell({
               <Plus className="size-4" /> New role
             </Button>
             <ThemeToggle />
-            <span className="avatar-gradient ml-1 hidden size-9 items-center justify-center rounded-full text-xs font-semibold md:flex">
-              {initials(email)}
-            </span>
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt=""
+                className="ring-border ml-1 hidden size-9 rounded-full object-cover ring-1 md:block"
+              />
+            ) : (
+              <span className="avatar-gradient ml-1 hidden size-9 items-center justify-center rounded-full text-xs font-semibold md:flex">
+                {initials(email)}
+              </span>
+            )}
           </div>
         </header>
 

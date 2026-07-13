@@ -50,7 +50,7 @@ export default async function BoardPage({
   }));
 
   return (
-    <AppShell email={user.email}>
+    <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
       <div className="page-enter w-full px-5 py-7 md:px-6 md:py-9">
         <Link
           href="/"

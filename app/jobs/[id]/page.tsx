@@ -92,7 +92,7 @@ export default async function RolePeoplePage({
   const scoringOn = isScoringConfigured();
 
   return (
-    <AppShell email={user.email}>
+    <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
       <div className="page-enter mx-auto w-full max-w-4xl px-5 py-7 md:px-6 md:py-9">
         <Link
           href="/"

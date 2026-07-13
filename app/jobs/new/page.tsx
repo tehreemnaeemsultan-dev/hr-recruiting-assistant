@@ -23,7 +23,7 @@ export default async function NewJobPage() {
   if (!user) redirect("/login");
 
   return (
-    <AppShell email={user.email}>
+    <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
       <div className="page-enter mx-auto w-full max-w-2xl px-6 py-8 md:py-10">
         <div className="mb-6">
           <Link href="/" className="text-muted-foreground text-sm hover:underline">
