@@ -41,6 +41,18 @@ clever. Do not build anything outside the current phase without the owner asking
   with `provider = 'zoho'`. History: SPEC §2 locked email to Zoho → owner
   switched to Gmail 2026-07-10 → **owner reverted email to Zoho 2026-07-13** (HR
   sends from Zoho); Google now covers scheduling only.
+- **Inbound email / candidate replies (Phase 6): Zoho IMAP.** Reads the inbox
+  via `imap.zoho.com` (imapflow + mailparser, `lib/zoho-imap.ts`), reusing the
+  same app password as sending (enable IMAP in Zoho: Settings → Mail Accounts →
+  IMAP Access). Sync is **on-demand** (server action `syncInboundEmails` in
+  `app/emails/actions.ts`) — auto-runs when the Emails "Received" tab opens
+  (rate-limited via `email_sync_state.last_synced_at`) plus a manual Refresh;
+  no cron (Vercel Hobby only allows daily cron). Replies are matched to an
+  application by RFC `In-Reply-To`/`References` → a sent `message_id`, falling
+  back to sender address → candidate's most recent application; unmatched inbox
+  mail is skipped. Inbound rows land in `emails` with `direction='inbound'`,
+  `status='received'`, deduped by unique `message_id`. Emails tab shows
+  **Sent / Received** sections.
 - **Calendar (Phase 4): Google**, OAuth app (`lib/google.ts`). Used for
   interview scheduling (Calendar + Meet) only — **not** email. OAuth flow:
   `/api/oauth/google/start` + `/api/oauth/google/callback`. Scopes requested up

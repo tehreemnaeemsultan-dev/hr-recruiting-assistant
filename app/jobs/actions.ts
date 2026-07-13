@@ -481,12 +481,14 @@ export async function sendCandidateEmail(
     });
     await supabase.from("emails").insert({
       application_id: applicationId,
+      direction: "outbound",
       to_address: to,
       subject: input.subject,
       body: input.body,
       provider: "zoho",
       status: "sent",
       provider_message_id: sent.id,
+      message_id: sent.id, // RFC Message-ID, so replies can be threaded back
     });
     await supabase.from("events").insert({
       application_id: applicationId,
