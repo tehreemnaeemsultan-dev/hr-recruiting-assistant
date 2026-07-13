@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -25,6 +24,7 @@ import {
   CalendarClock,
   Eye,
   ChevronDown,
+  Check,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { moveApplicationStage } from "@/app/jobs/actions";
@@ -43,6 +43,7 @@ export interface BoardItem {
   score: number | null;
   source: string;
   stage: Stage;
+  jobId: string;
 }
 
 export interface JobOption {
@@ -263,30 +264,139 @@ function Column({
   );
 }
 
-function RoleSelect({
+function RoleFilter({
   jobs,
-  selectedJobId,
+  selected,
+  onChange,
 }: {
   jobs: JobOption[];
-  selectedJobId: string;
+  selected: string[];
+  onChange: (ids: string[]) => void;
 }) {
-  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocPointerDown(e: PointerEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onDocPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onDocPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const allSelected = selected.length === jobs.length;
+  const label = allSelected
+    ? "All Roles"
+    : selected.length === 0
+      ? "No roles"
+      : selected.length === 1
+        ? (jobs.find((j) => j.id === selected[0])?.title ?? "1 role")
+        : `${selected.length} roles`;
+
+  function toggle(id: string) {
+    onChange(
+      selected.includes(id)
+        ? selected.filter((s) => s !== id)
+        : [...selected, id],
+    );
+  }
+  function toggleAll() {
+    onChange(allSelected ? [] : jobs.map((j) => j.id));
+  }
+
   return (
-    <div className="relative">
-      <select
-        aria-label="Select role"
-        value={selectedJobId}
-        onChange={(e) => router.push(`/?job=${e.target.value}`)}
-        className="border-input bg-card hover:border-border-strong focus-visible:border-ring focus-visible:ring-ring/25 h-9 cursor-pointer appearance-none rounded-lg border py-1 pr-9 pl-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="border-input bg-card hover:border-border-strong focus-visible:border-ring focus-visible:ring-ring/25 flex h-9 cursor-pointer items-center gap-2 rounded-lg border py-1 pr-2.5 pl-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
       >
-        {jobs.map((j) => (
-          <option key={j.id} value={j.id}>
-            {j.title} ({j.count})
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="text-text-tertiary pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2" />
+        <span className="max-w-[10rem] truncate">{label}</span>
+        <ChevronDown className="text-text-tertiary size-4 shrink-0" />
+      </button>
+
+      {open ? (
+        <div
+          role="listbox"
+          className="bg-card animate-in fade-in-0 zoom-in-95 absolute left-0 top-full z-20 mt-1.5 max-h-80 w-64 overflow-y-auto rounded-xl border p-1.5 shadow-lg"
+        >
+          <RoleOption
+            label="All Roles"
+            checked={allSelected}
+            indeterminate={!allSelected && selected.length > 0}
+            onToggle={toggleAll}
+            emphasize
+          />
+          <div className="bg-border my-1 h-px" />
+          {jobs.map((j) => (
+            <RoleOption
+              key={j.id}
+              label={j.title}
+              count={j.count}
+              checked={selected.includes(j.id)}
+              onToggle={() => toggle(j.id)}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function RoleOption({
+  label,
+  count,
+  checked,
+  indeterminate,
+  onToggle,
+  emphasize,
+}: {
+  label: string;
+  count?: number;
+  checked: boolean;
+  indeterminate?: boolean;
+  onToggle: () => void;
+  emphasize?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={checked}
+      onClick={onToggle}
+      className="hover:bg-brand-ghost flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors"
+    >
+      <span
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
+          checked || indeterminate
+            ? "border-brand bg-brand text-white"
+            : "border-border-strong bg-card",
+        )}
+      >
+        {checked ? (
+          <Check className="size-3" strokeWidth={3} />
+        ) : indeterminate ? (
+          <span className="bg-white h-0.5 w-2 rounded-full" />
+        ) : null}
+      </span>
+      <span className={cn("min-w-0 flex-1 truncate", emphasize && "font-semibold")}>
+        {label}
+      </span>
+      {typeof count === "number" ? (
+        <span className="text-text-tertiary shrink-0 text-xs tabular-nums">{count}</span>
+      ) : null}
+    </button>
   );
 }
 
@@ -332,18 +442,21 @@ export function PipelineBoard({
   jobTitle,
   initialItems,
   jobs,
-  selectedJobId,
 }: {
   jobId: string;
   jobTitle: string;
   initialItems: BoardItem[];
   jobs?: JobOption[];
-  selectedJobId?: string;
 }) {
+  const multiRole = Boolean(jobs && jobs.length);
   const [items, setItems] = useState<BoardItem[]>(initialItems);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"board" | "list">("board");
+  // Role filter (dashboard only): default to all roles selected.
+  const [selectedJobIds, setSelectedJobIds] = useState<string[]>(
+    () => jobs?.map((j) => j.id) ?? [],
+  );
   const [emailPrompt, setEmailPrompt] = useState<{
     item: BoardItem;
     rejection: boolean;
@@ -357,42 +470,46 @@ export function PipelineBoard({
 
   useEffect(() => {
     const supabase = createClient();
+    const refetch = async () => {
+      let q = supabase
+        .from("applications")
+        .select(
+          "id, candidate_id, stage, score, job_id, candidates(full_name, source, email)",
+        );
+      // Dashboard shows all roles; the per-role board stays scoped to its job.
+      if (!multiRole) q = q.eq("job_id", jobId);
+      const { data } = await q;
+      if (!data) return;
+      setItems(
+        (data as unknown as RealtimeRow[]).map((a) => ({
+          applicationId: a.id,
+          candidateId: a.candidate_id,
+          fullName: a.candidates?.full_name ?? "Unknown candidate",
+          email: a.candidates?.email ?? null,
+          score: a.score,
+          source: a.candidates?.source ?? "upload",
+          stage: a.stage as Stage,
+          jobId: a.job_id,
+        })),
+      );
+    };
     const channel = supabase
-      .channel(`board:${jobId}`)
+      .channel(`board:${multiRole ? "all" : jobId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "applications",
-          filter: `job_id=eq.${jobId}`,
+          ...(multiRole ? {} : { filter: `job_id=eq.${jobId}` }),
         },
-        async () => {
-          const { data } = await supabase
-            .from("applications")
-            .select(
-              "id, candidate_id, stage, score, candidates(full_name, source, email)",
-            )
-            .eq("job_id", jobId);
-          if (!data) return;
-          setItems(
-            (data as unknown as RealtimeRow[]).map((a) => ({
-              applicationId: a.id,
-              candidateId: a.candidate_id,
-              fullName: a.candidates?.full_name ?? "Unknown candidate",
-              email: a.candidates?.email ?? null,
-              score: a.score,
-              source: a.candidates?.source ?? "upload",
-              stage: a.stage as Stage,
-            })),
-          );
-        },
+        refetch,
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [jobId]);
+  }, [jobId, multiRole]);
 
   async function moveItem(applicationId: string, toStage: Stage) {
     const current = items.find((i) => i.applicationId === applicationId);
@@ -405,7 +522,7 @@ export function PipelineBoard({
       ),
     );
 
-    const res = await moveApplicationStage(applicationId, jobId, toStage);
+    const res = await moveApplicationStage(applicationId, current.jobId, toStage);
     if (!res.ok) {
       toast.error(res.error);
       setItems((prev) =>
@@ -436,16 +553,20 @@ export function PipelineBoard({
 
   const activeItem = items.find((i) => i.applicationId === activeId) ?? null;
   const q = query.trim().toLowerCase();
-  const shown = q
-    ? items.filter((i) => i.fullName.toLowerCase().includes(q))
-    : items;
+  const shown = items
+    .filter((i) => !multiRole || selectedJobIds.includes(i.jobId))
+    .filter((i) => !q || i.fullName.toLowerCase().includes(q));
 
   return (
     <div>
       {/* Toolbar */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        {jobs && selectedJobId ? (
-          <RoleSelect jobs={jobs} selectedJobId={selectedJobId} />
+        {multiRole && jobs ? (
+          <RoleFilter
+            jobs={jobs}
+            selected={selectedJobIds}
+            onChange={setSelectedJobIds}
+          />
         ) : null}
 
         <div className="ml-auto flex items-center gap-2">
@@ -526,10 +647,12 @@ export function PipelineBoard({
             if (!o) setEmailPrompt(null);
           }}
           applicationId={emailPrompt.item.applicationId}
-          jobId={jobId}
+          jobId={emailPrompt.item.jobId}
           candidateName={emailPrompt.item.fullName}
           candidateEmail={emailPrompt.item.email}
-          jobTitle={jobTitle}
+          jobTitle={
+            jobs?.find((j) => j.id === emailPrompt.item.jobId)?.title ?? jobTitle
+          }
           defaultTemplate={emailPrompt.rejection ? "rejection" : "outreach"}
         />
       ) : null}
@@ -542,7 +665,7 @@ export function PipelineBoard({
             if (!o) setSchedulePrompt(null);
           }}
           applicationId={schedulePrompt.applicationId}
-          jobId={jobId}
+          jobId={schedulePrompt.jobId}
           candidateName={schedulePrompt.fullName}
         />
       ) : null}
@@ -555,5 +678,6 @@ interface RealtimeRow {
   candidate_id: string;
   stage: string;
   score: number | null;
+  job_id: string;
   candidates: { full_name: string; source: string; email: string | null } | null;
 }

@@ -47,6 +47,7 @@ export default async function BoardPage({
     score: a.score,
     source: a.candidates?.source ?? "upload",
     stage: a.stage as Stage,
+    jobId: id,
   }));
 
   return (

@@ -24,12 +24,7 @@ interface BoardRow {
   candidates: { full_name: string; source: string; email: string | null } | null;
 }
 
-export default async function BoardHomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ job?: string }>;
-}) {
-  const { job: jobParam } = await searchParams;
+export default async function BoardHomePage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -85,32 +80,26 @@ export default async function BoardHomePage({
     count: rows.filter((r) => r.job_id === j.id).length,
   }));
 
-  // Selected role: ?job= if valid, else the most recent role.
-  const selected =
-    jobOptions.find((j) => j.id === jobParam) ?? jobOptions[0];
-
-  const items: BoardItem[] = rows
-    .filter((r) => r.job_id === selected.id)
-    .map((a) => ({
-      applicationId: a.id,
-      candidateId: a.candidate_id,
-      fullName: a.candidates?.full_name ?? "Unknown candidate",
-      email: a.candidates?.email ?? null,
-      score: a.score,
-      source: a.candidates?.source ?? "upload",
-      stage: a.stage as Stage,
-    }));
+  // Show candidates across all roles; the board's Role filter narrows this.
+  const items: BoardItem[] = rows.map((a) => ({
+    applicationId: a.id,
+    candidateId: a.candidate_id,
+    fullName: a.candidates?.full_name ?? "Unknown candidate",
+    email: a.candidates?.email ?? null,
+    score: a.score,
+    source: a.candidates?.source ?? "upload",
+    stage: a.stage as Stage,
+    jobId: a.job_id,
+  }));
 
   return (
     <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
       <div className="page-enter flex min-w-0 flex-col px-5 py-5 md:px-6">
         <PipelineBoard
-          key={selected.id}
-          jobId={selected.id}
-          jobTitle={selected.title}
+          jobId={jobOptions[0].id}
+          jobTitle={jobOptions[0].title}
           initialItems={items}
           jobs={jobOptions}
-          selectedJobId={selected.id}
         />
       </div>
     </AppShell>
