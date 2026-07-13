@@ -93,7 +93,7 @@ export default async function RolePeoplePage({
 
   return (
     <AppShell email={user.email}>
-      <div className="mx-auto w-full max-w-4xl px-6 py-8 md:py-10">
+      <div className="page-enter mx-auto w-full max-w-4xl px-5 py-7 md:px-6 md:py-9">
         <Link
           href="/"
           className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1.5 text-sm"
@@ -103,8 +103,10 @@ export default async function RolePeoplePage({
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{job.title}</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <h1 className="font-heading text-2xl font-bold tracking-tight">
+              {job.title}
+            </h1>
+            <p className="text-text-secondary mt-1 text-sm">
               {cards.length} {cards.length === 1 ? "person" : "people"} ·{" "}
               {reviewedCount} reviewed
             </p>
@@ -154,7 +156,7 @@ export default async function RolePeoplePage({
         <Card className="mt-4">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <Upload className="text-primary size-4" /> Add people
+              <Upload className="text-brand size-4" /> Add people
             </CardTitle>
             <CardDescription>
               Drop in CVs (PDF) and they&apos;ll be reviewed and ranked for this
@@ -168,7 +170,7 @@ export default async function RolePeoplePage({
 
         <section className="mt-8">
           <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-            <Sparkles className="text-primary size-4.5" /> Best matches first
+            <Sparkles className="text-brand size-5" /> Best matches first
           </h2>
           {cards.length === 0 ? (
             <div className="bg-card text-muted-foreground rounded-2xl border border-dashed px-6 py-12 text-center text-sm">

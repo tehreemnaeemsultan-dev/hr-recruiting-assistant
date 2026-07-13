@@ -12,15 +12,15 @@ export function RoleTabs({
       href={href}
       className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
         isActive
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground hover:text-foreground"
+          ? "bg-card text-foreground shadow-xs"
+          : "text-text-secondary hover:text-foreground"
       }`}
     >
       {label}
     </Link>
   );
   return (
-    <div className="bg-muted/60 inline-flex rounded-lg border p-1">
+    <div className="bg-secondary inline-flex rounded-lg p-0.5">
       {item(`/jobs/${jobId}`, "People", active === "people")}
       {item(`/jobs/${jobId}/board`, "Board", active === "board")}
     </div>

@@ -75,7 +75,7 @@ export default async function CandidatePage({
 
   return (
     <AppShell email={user.email}>
-      <div className="mx-auto w-full max-w-3xl px-6 py-8 md:py-10">
+      <div className="page-enter mx-auto w-full max-w-3xl px-6 py-8 md:py-10">
         <div className="mb-6">
           <Link
             href="/"
@@ -84,7 +84,7 @@ export default async function CandidatePage({
             ← Home
           </Link>
           <div className="mt-2 flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="font-heading text-2xl font-bold tracking-tight">
               {candidate.full_name}
             </h1>
             <Badge variant="secondary">{candidate.source}</Badge>

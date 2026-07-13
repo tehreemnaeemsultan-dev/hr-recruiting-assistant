@@ -24,12 +24,12 @@ export default async function NewJobPage() {
 
   return (
     <AppShell email={user.email}>
-      <div className="mx-auto w-full max-w-2xl px-6 py-8 md:py-10">
+      <div className="page-enter mx-auto w-full max-w-2xl px-6 py-8 md:py-10">
         <div className="mb-6">
           <Link href="/" className="text-muted-foreground text-sm hover:underline">
             ← Home
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+          <h1 className="mt-2 font-heading text-2xl font-bold tracking-tight">
             Add a role
           </h1>
         </div>
