@@ -15,25 +15,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/stat-card";
 import { DonutChart, BarChart, FunnelBars, type Bar } from "@/components/charts";
+import { STAGE_HEX } from "@/components/stage-badge";
 import {
   computeAnalytics,
   formatDuration,
   FUNNEL_STAGES,
   type JobAnalytics,
 } from "@/lib/analytics";
-import { STAGES, STAGE_LABELS, type Stage } from "@/lib/constants";
+import { STAGES, STAGE_LABELS } from "@/lib/constants";
 
 export const metadata = {
   title: "Analytics · Mujtaba Hires",
-};
-
-const STAGE_COLORS: Record<Stage, string> = {
-  new: "var(--chart-3)",
-  screening: "var(--chart-2)",
-  interview_1: "var(--chart-1)",
-  interview_2: "oklch(0.62 0.19 300)",
-  hired: "var(--chart-5)",
-  rejected: "oklch(0.63 0.2 15)",
 };
 
 function JobCard({ job }: { job: JobAnalytics }) {
@@ -88,7 +80,7 @@ function JobCard({ job }: { job: JobAnalytics }) {
               data={funnel.map((f) => ({
                 label: f.label,
                 value: f.reached,
-                color: STAGE_COLORS[f.stage],
+                color: STAGE_HEX[f.stage],
               }))}
             />
             {job.rejected > 0 && (
@@ -118,7 +110,7 @@ function JobCard({ job }: { job: JobAnalytics }) {
                       <span className="inline-flex items-center gap-2">
                         <span
                           className="size-2 rounded-full"
-                          style={{ backgroundColor: STAGE_COLORS[s.stage] }}
+                          style={{ backgroundColor: STAGE_HEX[s.stage] }}
                         />
                         {s.label}
                       </span>
@@ -157,7 +149,7 @@ export default async function AnalyticsPage() {
       (sum, j) => sum + (j.stages.find((s) => s.stage === stage)?.current ?? 0),
       0,
     ),
-    color: STAGE_COLORS[stage],
+    color: STAGE_HEX[stage],
   })).filter((d) => d.value > 0);
 
   const perRole: Bar[] = jobs
@@ -171,10 +163,12 @@ export default async function AnalyticsPage() {
 
   return (
     <AppShell email={user.email}>
-      <div className="mx-auto w-full max-w-6xl px-5 py-7 md:px-6 md:py-9">
+      <div className="page-enter mx-auto w-full max-w-6xl px-5 py-7 md:px-6 md:py-9">
         <div className="mb-7">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Analytics</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
+            Analytics
+          </h1>
+          <p className="text-text-secondary mt-1 text-sm">
             Pipeline health and timing, computed from your activity log.
           </p>
         </div>
@@ -195,18 +189,28 @@ export default async function AnalyticsPage() {
             </section>
 
             {overall.avgTimeToHireMs !== null && (
-              <p className="text-muted-foreground mt-4 text-sm">
-                Average time-to-hire across roles:{" "}
-                <span className="text-foreground font-medium">
-                  {formatDuration(overall.avgTimeToHireMs)}
+              <div className="surface mt-4 flex items-center gap-4 p-5">
+                <span className="bg-brand-muted text-brand flex size-12 shrink-0 items-center justify-center rounded-xl">
+                  <Clock className="size-6" />
                 </span>
-              </p>
+                <div>
+                  <div className="text-text-secondary text-sm">
+                    Average time-to-hire across roles
+                  </div>
+                  <div className="text-2xl font-bold tabular-nums">
+                    {formatDuration(overall.avgTimeToHireMs)}
+                  </div>
+                </div>
+              </div>
             )}
 
             {overall.totalCandidates > 0 ? (
               <section className="mt-5 grid gap-4 lg:grid-cols-3">
                 <div className="surface p-5">
-                  <h2 className="mb-4 text-base font-semibold">Overall by stage</h2>
+                  <h2 className="text-sm font-semibold">Overall by stage</h2>
+                  <p className="text-text-secondary mb-4 text-xs">
+                    Active candidates now
+                  </p>
                   {stageTotals.length > 0 ? (
                     <DonutChart
                       data={stageTotals}
@@ -214,12 +218,15 @@ export default async function AnalyticsPage() {
                       centerLabel="active"
                     />
                   ) : (
-                    <p className="text-muted-foreground text-sm">No active candidates.</p>
+                    <p className="text-text-secondary text-sm">No active candidates.</p>
                   )}
                 </div>
                 {perRole.length > 0 ? (
                   <div className="surface p-5 lg:col-span-2">
-                    <h2 className="mb-4 text-base font-semibold">Candidates by role</h2>
+                    <h2 className="text-sm font-semibold">Candidates by role</h2>
+                    <p className="text-text-secondary mb-4 text-xs">
+                      Total per role
+                    </p>
                     <BarChart data={perRole} height={200} />
                   </div>
                 ) : null}
@@ -230,7 +237,7 @@ export default async function AnalyticsPage() {
               <h2 className="mb-4 text-lg font-semibold">By role</h2>
               {jobs.length === 0 ? (
                 <div className="surface flex flex-col items-center justify-center border-dashed px-6 py-16 text-center">
-                  <span className="bg-primary/10 text-primary mb-4 flex size-14 items-center justify-center rounded-2xl">
+                  <span className="bg-brand-muted text-brand mb-4 flex size-14 items-center justify-center rounded-2xl">
                     <BarChart3 className="size-7" />
                   </span>
                   <h3 className="text-base font-semibold">Nothing to chart yet</h3>
