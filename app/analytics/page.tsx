@@ -188,10 +188,10 @@ export default async function AnalyticsPage() {
         ) : (
           <>
             <section className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-              <StatCard label="Candidates" value={overall.totalCandidates} icon={Users} variant="cyan" />
-              <StatCard label="In progress" value={overall.inProgress} icon={Clock} variant="orange" />
-              <StatCard label="Hired" value={overall.hired} icon={CheckCircle2} variant="green" />
-              <StatCard label="Rejected" value={overall.rejected} icon={XCircle} variant="rose" />
+              <StatCard label="Candidates" value={overall.totalCandidates} icon={Users} accent="blue" />
+              <StatCard label="In progress" value={overall.inProgress} icon={Clock} accent="amber" />
+              <StatCard label="Hired" value={overall.hired} icon={CheckCircle2} accent="emerald" />
+              <StatCard label="Rejected" value={overall.rejected} icon={XCircle} accent="red" />
             </section>
 
             {overall.avgTimeToHireMs !== null && (

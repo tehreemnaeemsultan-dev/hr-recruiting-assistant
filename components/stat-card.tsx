@@ -1,27 +1,27 @@
 import type { LucideIcon } from "lucide-react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type StatVariant = "violet" | "orange" | "green" | "cyan" | "rose";
+export type StatAccent = "violet" | "blue" | "amber" | "emerald" | "red";
 
-const VARIANT_CLASS: Record<StatVariant, string> = {
-  violet: "stat-violet",
-  orange: "stat-orange",
-  green: "stat-green",
-  cyan: "stat-cyan",
-  rose: "stat-rose",
+const ACCENT: Record<StatAccent, { border: string; icon: string }> = {
+  violet: { border: "border-l-violet-500", icon: "text-violet-500" },
+  blue: { border: "border-l-blue-500", icon: "text-blue-500" },
+  amber: { border: "border-l-amber-500", icon: "text-amber-500" },
+  emerald: { border: "border-l-emerald-500", icon: "text-emerald-500" },
+  red: { border: "border-l-red-500", icon: "text-red-500" },
 };
 
 /**
- * Colorful gradient hero tile (dashboard / analytics). White foreground,
- * a soft decorative corner blob, an icon chip, and a big tabular number.
- * Purely presentational — safe to render from a server component.
+ * Clean stat tile: white card with a 4px colored left border, a large dark
+ * number, a small secondary label, and a muted icon. Optional delta with an
+ * up/down arrow (green positive, red negative). Presentational — server-safe.
  */
 export function StatCard({
   label,
   value,
   icon: Icon,
-  variant = "violet",
+  accent = "violet",
   delta,
   hint,
   className,
@@ -29,50 +29,49 @@ export function StatCard({
   label: string;
   value: string | number;
   icon: LucideIcon;
-  variant?: StatVariant;
-  /** Signed percentage-ish change; positive renders green-up, negative red-down. */
+  accent?: StatAccent;
   delta?: number | null;
-  /** Small caption under the delta, e.g. "vs last 30 days". */
   hint?: string;
   className?: string;
 }) {
+  const a = ACCENT[accent];
   return (
     <div
       className={cn(
-        "stat-card relative overflow-hidden rounded-2xl p-5",
-        VARIANT_CLASS[variant],
+        "rounded-xl border border-l-4 bg-card p-5 shadow-xs transition-shadow duration-200 hover:shadow-sm",
+        a.border,
         className,
       )}
     >
-      {/* Decorative corner blobs */}
-      <span className="pointer-events-none absolute -top-8 -right-8 size-28 rounded-full bg-white/15" />
-      <span className="pointer-events-none absolute -top-2 -right-2 size-16 rounded-full bg-white/10" />
-
-      <div className="relative flex items-center justify-between">
-        <span className="text-[13px] font-medium text-white/85">{label}</span>
-        <span className="flex size-9 items-center justify-center rounded-full bg-white/20 text-white ring-1 ring-white/25 backdrop-blur-sm">
-          <Icon className="size-[18px]" />
-        </span>
-      </div>
-
-      <div className="relative mt-3 font-mono text-3xl font-semibold tabular-nums">
-        {value}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-text-secondary text-sm">{label}</span>
+          <span className="text-text-primary text-2xl font-bold tabular-nums">
+            {value}
+          </span>
+        </div>
+        <Icon className={cn("size-5 shrink-0 opacity-80", a.icon)} />
       </div>
 
       {delta != null || hint ? (
-        <div className="relative mt-2 flex items-center gap-1.5 text-xs text-white/85">
+        <div className="mt-2 flex items-center gap-1.5 text-xs">
           {delta != null ? (
-            <span className="inline-flex items-center gap-1 font-medium">
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 font-medium",
+                delta >= 0 ? "text-success" : "text-danger",
+              )}
+            >
               {delta >= 0 ? (
-                <TrendingUp className="size-3.5" />
+                <ArrowUp className="size-3" />
               ) : (
-                <TrendingDown className="size-3.5" />
+                <ArrowDown className="size-3" />
               )}
               {delta >= 0 ? "+" : ""}
-              {delta}%
+              {delta}
             </span>
           ) : null}
-          {hint ? <span className="text-white/70">{hint}</span> : null}
+          {hint ? <span className="text-text-tertiary">{hint}</span> : null}
         </div>
       ) : null}
     </div>

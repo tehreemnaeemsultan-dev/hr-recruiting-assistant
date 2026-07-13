@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
-// Base font for the whole app. Bound to the `--font-sans` token that the theme
-// (globals.css) and all shadcn components resolve `font-sans` from. Geist is a
-// clean neutral grotesque; it pairs with Geist Mono (below) for the tabular
-// figures used on metrics — the "Atlas" data-cockpit identity.
-const geistSans = Geist({
-  variable: "--font-sans",
+// Body font — Inter. Bound to `--font-inter`, which globals.css maps to
+// `--font-sans` (so all shadcn components resolve `font-sans` from it).
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Display font — Plus Jakarta Sans, for large headings and the login hero.
+// Bound to `--font-jakarta` → `--font-display` / `font-heading`.
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -32,7 +35,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jakarta.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <ThemeProvider

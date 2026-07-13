@@ -116,10 +116,10 @@ export default async function HomePage() {
 
         {/* Stat tiles */}
         <section className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-          <StatCard label="Open roles" value={openJobs} icon={Briefcase} variant="violet" />
-          <StatCard label="People" value={totalCandidates} icon={Users} variant="cyan" />
-          <StatCard label="In progress" value={inProgress} icon={Clock} variant="orange" />
-          <StatCard label="Hired" value={hired} icon={CheckCircle2} variant="green" />
+          <StatCard label="Open roles" value={openJobs} icon={Briefcase} accent="violet" />
+          <StatCard label="People" value={totalCandidates} icon={Users} accent="blue" />
+          <StatCard label="In progress" value={inProgress} icon={Clock} accent="amber" />
+          <StatCard label="Hired" value={hired} icon={CheckCircle2} accent="emerald" />
         </section>
 
         {/* Charts */}
