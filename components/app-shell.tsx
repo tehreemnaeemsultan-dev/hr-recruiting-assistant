@@ -72,7 +72,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
 function Brand({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5">
-      <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-sm font-bold text-white shadow-md shadow-[#3a5ce8]/30">
+      <span className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-[13px] font-bold text-white shadow-sm">
         MH
       </span>
       <span className="text-[15px] font-semibold tracking-tight">
@@ -90,13 +90,13 @@ function NavLinks({
   onNavigate?: () => void;
 }) {
   return (
-    <nav className="flex flex-col gap-6">
+    <nav className="flex flex-col gap-5">
       {SECTIONS.map((section) => (
         <div key={section.title}>
-          <p className="text-muted-foreground/70 mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider">
+          <p className="text-text-tertiary mb-1 mt-4 px-3 text-xs font-semibold uppercase tracking-wider first:mt-0">
             {section.title}
           </p>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5">
             {section.items.map((item) => {
               const active = item.match(pathname);
               const Icon = item.icon;
@@ -105,19 +105,23 @@ function NavLinks({
                   key={item.href}
                   href={item.href}
                   onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
-                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                    "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     active
-                      ? "bg-gradient-to-r from-[#5b6ff0] to-[#3a5ce8] text-white shadow-md shadow-[#3a5ce8]/25"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                      ? "bg-brand-muted text-brand"
+                      : "text-text-secondary hover:bg-brand-ghost hover:text-text-primary",
                   )}
                 >
+                  {active ? (
+                    <span className="bg-brand absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full" />
+                  ) : null}
                   <Icon
                     className={cn(
                       "size-[18px] transition-colors",
                       active
-                        ? "text-white"
-                        : "text-muted-foreground group-hover:text-foreground",
+                        ? "text-brand"
+                        : "text-text-tertiary group-hover:text-text-primary",
                     )}
                   />
                   {item.label}
@@ -173,11 +177,11 @@ function SidebarBody({
       </div>
 
       <div className="border-sidebar-border mt-4 flex items-center gap-2.5 border-t pt-4">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-xs font-semibold text-white">
+        <span className="avatar-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
           {initials(email)}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">
+          <div className="truncate text-sm font-medium capitalize">
             {email?.split("@")[0] ?? "Account"}
           </div>
           <div className="text-muted-foreground truncate text-xs">
@@ -269,7 +273,7 @@ export function AppShell({
               <Plus className="size-4" /> New role
             </Button>
             <ThemeToggle />
-            <span className="ml-1 hidden size-9 items-center justify-center rounded-full bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-xs font-semibold text-white md:flex">
+            <span className="avatar-gradient ml-1 hidden size-9 items-center justify-center rounded-full text-xs font-semibold md:flex">
               {initials(email)}
             </span>
           </div>
