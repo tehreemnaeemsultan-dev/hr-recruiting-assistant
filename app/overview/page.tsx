@@ -7,19 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/stat-card";
 import { AreaChart, DonutChart, BarChart, type Point, type Bar } from "@/components/charts";
+import { STAGE_HEX } from "@/components/stage-badge";
 import { STAGES, STAGE_LABELS, type Stage } from "@/lib/constants";
 
 export const metadata = {
   title: "Overview · Mujtaba Hires",
-};
-
-const STAGE_COLORS: Record<Stage, string> = {
-  new: "var(--chart-3)",
-  screening: "var(--chart-2)",
-  interview_1: "var(--chart-1)",
-  interview_2: "oklch(0.62 0.19 300)",
-  hired: "var(--chart-5)",
-  rejected: "oklch(0.63 0.2 15)",
 };
 
 interface AppRow {
@@ -82,7 +74,7 @@ export default async function HomePage() {
   const stageData = STAGES.map((s) => ({
     label: STAGE_LABELS[s],
     value: apps.filter((a) => a.stage === s).length,
-    color: STAGE_COLORS[s],
+    color: STAGE_HEX[s],
   })).filter((d) => d.value > 0);
 
   const perRole: Bar[] = jobList
@@ -97,14 +89,14 @@ export default async function HomePage() {
 
   return (
     <AppShell email={user.email}>
-      <div className="mx-auto w-full max-w-6xl px-5 py-7 md:px-6 md:py-9">
+      <div className="page-enter mx-auto w-full max-w-6xl px-5 py-7 md:px-6 md:py-9">
         {/* Hero */}
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
               Welcome back, <span className="capitalize">{name}</span> 👋
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <p className="text-text-secondary mt-1 text-sm">
               Here&apos;s how your hiring is going today.
             </p>
           </div>
@@ -125,18 +117,15 @@ export default async function HomePage() {
         {/* Charts */}
         {totalCandidates > 0 ? (
           <section className="mt-5 grid gap-4 lg:grid-cols-3">
-            <div className="surface animate-in fade-in slide-in-from-bottom-2 p-5 duration-500 lg:col-span-2">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-semibold">Applications over time</h2>
-                  <p className="text-muted-foreground text-xs">Last 8 weeks</p>
-                </div>
-              </div>
+            <div className="surface p-5 lg:col-span-2">
+              <h2 className="text-sm font-semibold">Applications over time</h2>
+              <p className="text-text-secondary mb-4 text-xs">Last 8 weeks</p>
               <AreaChart data={timeline} height={240} />
             </div>
 
-            <div className="surface animate-in fade-in slide-in-from-bottom-2 p-5 duration-500">
-              <h2 className="mb-4 text-base font-semibold">Pipeline by stage</h2>
+            <div className="surface p-5">
+              <h2 className="text-sm font-semibold">Pipeline by stage</h2>
+              <p className="text-text-secondary mb-4 text-xs">Current candidates</p>
               {stageData.length > 0 ? (
                 <DonutChart
                   data={stageData}
@@ -144,13 +133,16 @@ export default async function HomePage() {
                   centerLabel="people"
                 />
               ) : (
-                <p className="text-muted-foreground text-sm">No candidates yet.</p>
+                <p className="text-text-secondary text-sm">No candidates yet.</p>
               )}
             </div>
 
             {perRole.length > 0 ? (
-              <div className="surface animate-in fade-in slide-in-from-bottom-2 p-5 duration-500 lg:col-span-3">
-                <h2 className="mb-4 text-base font-semibold">Candidates by role</h2>
+              <div className="surface p-5 lg:col-span-3">
+                <h2 className="text-sm font-semibold">Candidates by role</h2>
+                <p className="text-text-secondary mb-4 text-xs">
+                  Top roles by volume
+                </p>
                 <BarChart data={perRole} height={220} />
               </div>
             ) : null}
@@ -168,11 +160,11 @@ export default async function HomePage() {
 
           {jobList.length === 0 ? (
             <div className="surface flex flex-col items-center justify-center border-dashed px-6 py-16 text-center">
-              <span className="bg-primary/10 text-primary mb-4 flex size-14 items-center justify-center rounded-2xl">
+              <span className="bg-brand-muted text-brand mb-4 flex size-14 items-center justify-center rounded-2xl">
                 <Briefcase className="size-7" />
               </span>
               <h3 className="text-base font-semibold">No roles yet</h3>
-              <p className="text-muted-foreground mt-1 max-w-sm text-sm">
+              <p className="text-text-secondary mt-1 max-w-sm text-sm">
                 Create your first role, drop in a few CVs, and we&apos;ll help you
                 find the best people fast.
               </p>
@@ -187,14 +179,14 @@ export default async function HomePage() {
                 const count = apps.filter((a) => a.job_id === job.id).length;
                 return (
                   <Link key={job.id} href={`/jobs/${job.id}`} className="group">
-                    <div className="surface hover:border-primary/40 flex items-center justify-between gap-3 p-5 transition-all hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="surface card-interactive flex items-center justify-between gap-3 p-5">
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-xl">
+                        <span className="bg-brand-muted text-brand flex size-11 shrink-0 items-center justify-center rounded-xl">
                           <Briefcase className="size-5" />
                         </span>
                         <div className="min-w-0">
                           <div className="truncate font-medium">{job.title}</div>
-                          <div className="text-muted-foreground text-xs">
+                          <div className="text-text-secondary text-xs">
                             {count} {count === 1 ? "person" : "people"} · Added{" "}
                             {fmtDate(job.created_at)}
                           </div>
