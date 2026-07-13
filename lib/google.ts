@@ -13,11 +13,12 @@ const CALENDAR_EVENTS_URL =
   "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all";
 const INTERVIEW_TIME_ZONE = "Asia/Karachi"; // SPEC §8.3
 
-// One OAuth app covers Phase 3 (Gmail send) and Phase 4 (Calendar events).
+// Google is used for interview scheduling only (Calendar + Meet). Email sending
+// moved to Zoho on 2026-07-13, so gmail.send is no longer requested. Reconnect
+// Google in Settings to drop the stale grant.
 export const GOOGLE_SCOPES = [
   "openid",
   "https://www.googleapis.com/auth/userinfo.email",
-  "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/calendar.events",
 ];
 

@@ -4,7 +4,7 @@ import { Mail, ChevronDown, CheckCircle2, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/stat-card";
-import { GmailIcon } from "@/components/brand-icons";
+import { ZohoMailIcon } from "@/components/brand-icons";
 
 export const metadata = {
   title: "Emails · Mujtaba Hires",
@@ -91,7 +91,7 @@ export default async function EmailsPage() {
                 return (
                   <details key={e.id} className="group">
                     <summary className="hover:bg-brand-ghost flex cursor-pointer list-none items-center gap-3 px-4 py-3 transition-colors">
-                      <GmailIcon className="size-9" />
+                      <ZohoMailIcon className="size-9" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="truncate text-sm font-medium">

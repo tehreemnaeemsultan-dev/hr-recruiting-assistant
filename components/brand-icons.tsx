@@ -44,6 +44,33 @@ export function GmailIcon({ className }: { className?: string }) {
   );
 }
 
+/** Zoho Mail — envelope on a white app-icon tile with Zoho's four brand colors. */
+export function ZohoMailIcon({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-black/5",
+        className,
+      )}
+    >
+      <svg
+        viewBox="0 0 48 48"
+        aria-hidden
+        style={{ width: "62%", height: "62%" }}
+      >
+        {/* envelope body */}
+        <rect x="4" y="12" width="40" height="26" rx="3" fill="#f4f6fb" stroke="#c9d3e3" strokeWidth="1.5" />
+        {/* flap, split into Zoho's four brand colors */}
+        <path fill="#e42527" d="M4 14 L14 24 L4 34 Z" />
+        <path fill="#f9b21d" d="M4 14 L24 26 L14 24 Z" />
+        <path fill="#089949" d="M44 14 L34 24 L44 34 Z" />
+        <path fill="#226db4" d="M44 14 L24 26 L34 24 Z" />
+        <path fill="none" stroke="#226db4" strokeWidth="2" strokeLinejoin="round" d="M6 15 L24 27 L42 15" />
+      </svg>
+    </span>
+  );
+}
+
 /** LinkedIn — white "in" on the brand blue rounded square. */
 export function LinkedInIcon({ className }: { className?: string }) {
   return (

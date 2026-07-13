@@ -2,9 +2,10 @@ import { redirect } from "next/navigation";
 import { Check, LogOut, ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getGoogleConnection, isGoogleConfigured } from "@/lib/google";
+import { isZohoConfigured, zohoSenderAddress } from "@/lib/zoho";
 import { signOut } from "@/app/auth/actions";
 import { AppShell } from "@/components/app-shell";
-import { GmailIcon } from "@/components/brand-icons";
+import { GmailIcon, ZohoMailIcon } from "@/components/brand-icons";
 import { ProfilePhotoForm } from "@/components/profile-photo-form";
 import { DisconnectGoogleButton } from "@/components/disconnect-google-button";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,8 @@ export default async function IntegrationsPage({
 
   const configured = isGoogleConfigured();
   const google = configured ? await getGoogleConnection(supabase) : null;
+  const zohoConfigured = isZohoConfigured();
+  const zohoSender = zohoSenderAddress();
 
   return (
     <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
@@ -74,6 +77,38 @@ export default async function IntegrationsPage({
         <h2 className="text-text-tertiary mb-2 text-xs font-semibold uppercase tracking-wider">
           Connected services
         </h2>
+
+        {/* Zoho Mail — candidate email sending */}
+        <div className="surface mb-3 flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+          <ZohoMailIcon className="size-11" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">Zoho Mail</h3>
+              {zohoConfigured ? (
+                <span className="inline-flex h-6 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
+                  <Check className="size-3" /> Connected
+                </span>
+              ) : (
+                <span className="border-border text-text-secondary inline-flex h-6 items-center rounded-full border px-2 text-xs font-medium">
+                  Not configured
+                </span>
+              )}
+            </div>
+            <p className="text-text-secondary mt-0.5 text-sm">
+              {zohoConfigured
+                ? `Sending candidate email from ${zohoSender ?? "your Zoho mailbox"}`
+                : "Send candidate email from your Zoho mailbox over SMTP."}
+            </p>
+          </div>
+          {!zohoConfigured ? (
+            <p className="text-text-tertiary shrink-0 text-xs sm:max-w-[13rem]">
+              Server not configured. Set <code>ZOHO_SMTP_USER</code> and{" "}
+              <code>ZOHO_SMTP_PASSWORD</code> (a Zoho app-specific password).
+            </p>
+          ) : null}
+        </div>
+
+        {/* Google — interview scheduling (Calendar + Meet) */}
         <div className="surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
           <GmailIcon className="size-11" />
           <div className="min-w-0 flex-1">
@@ -91,8 +126,8 @@ export default async function IntegrationsPage({
             </div>
             <p className="text-text-secondary mt-0.5 text-sm">
               {google
-                ? `Sending email & scheduling as ${google.email ?? "your account"}`
-                : "Send email from your Gmail and schedule Google Meet interviews."}
+                ? `Scheduling interviews as ${google.email ?? "your account"}`
+                : "Schedule Google Meet interviews on your calendar."}
             </p>
           </div>
           <div className="shrink-0">

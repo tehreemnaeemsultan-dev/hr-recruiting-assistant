@@ -33,12 +33,19 @@ clever. Do not build anything outside the current phase without the owner asking
   only scoring secret.
 - **PDF text extraction:** **`unpdf`** (serverless-friendly, no native deps) —
   `lib/pdf.ts`.
-- **Email (Phase 3) + Calendar (Phase 4): Google**, one OAuth app for both.
-  **Owner-approved deviation from SPEC §2** (email was locked to Zoho); switched
-  to Gmail on 2026-07-10 to consolidate with the Google Calendar phase. Email
-  sends via the Gmail API (`lib/google.ts`, `sendGmail`). OAuth flow:
+- **Email (Phase 3): Zoho Mail (SMTP).** Sends candidate email from the HR
+  mailbox via `smtp.zoho.com` using nodemailer (`lib/zoho.ts`, `sendZohoMail`).
+  Auth is a **Zoho app-specific password** (not OAuth) held in env
+  (`ZOHO_SMTP_USER`, `ZOHO_SMTP_PASSWORD`; host/port/from-name overridable) —
+  simplest for a single-user tool; no token store needed. Emails log to `emails`
+  with `provider = 'zoho'`. History: SPEC §2 locked email to Zoho → owner
+  switched to Gmail 2026-07-10 → **owner reverted email to Zoho 2026-07-13** (HR
+  sends from Zoho); Google now covers scheduling only.
+- **Calendar (Phase 4): Google**, OAuth app (`lib/google.ts`). Used for
+  interview scheduling (Calendar + Meet) only — **not** email. OAuth flow:
   `/api/oauth/google/start` + `/api/oauth/google/callback`. Scopes requested up
-  front: `openid`, `userinfo.email`, `gmail.send`, `calendar.events`.
+  front: `openid`, `userinfo.email`, `calendar.events`. (The `sendGmail` helper
+  remains in `lib/google.ts` but is no longer wired to any send path.)
 - **OAuth tokens** stored in `integration_tokens` (one row per provider),
   **encrypted at rest** with AES-256-GCM (`lib/crypto.ts`, `TOKEN_ENCRYPTION_KEY`).
   Never logged.

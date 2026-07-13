@@ -7,7 +7,8 @@ import { createAdminClient, RESUMES_BUCKET } from "@/lib/supabase/admin";
 import { extractPdfText } from "@/lib/pdf";
 import { parseCandidateFields } from "@/lib/parse";
 import { scoreCandidate, isScoringConfigured } from "@/lib/scoring";
-import { sendGmail, createCalendarEvent } from "@/lib/google";
+import { createCalendarEvent } from "@/lib/google";
+import { sendZohoMail } from "@/lib/zoho";
 import type { ParsedCandidate } from "@/lib/types";
 import { STAGES, type Stage } from "@/lib/constants";
 
@@ -446,7 +447,7 @@ export async function updateApplicationNotes(
   return { ok: true };
 }
 
-// --- Email (Phase 3, via Gmail) ------------------------------------------
+// --- Email (Phase 3, via Zoho Mail SMTP) ---------------------------------
 
 function bodyToHtml(text: string): string {
   const esc = text
@@ -459,7 +460,7 @@ function bodyToHtml(text: string): string {
   )}</div>`;
 }
 
-/** Send an email to a candidate via Gmail; log it to `emails` + an `events` row. */
+/** Send an email to a candidate via Zoho; log it to `emails` + an `events` row. */
 export async function sendCandidateEmail(
   applicationId: string,
   jobId: string,
@@ -473,7 +474,7 @@ export async function sendCandidateEmail(
   if (!input.subject.trim()) return { ok: false, error: "Subject is required." };
 
   try {
-    const sent = await sendGmail(supabase, {
+    const sent = await sendZohoMail({
       to,
       subject: input.subject,
       html: bodyToHtml(input.body),
@@ -483,7 +484,7 @@ export async function sendCandidateEmail(
       to_address: to,
       subject: input.subject,
       body: input.body,
-      provider: "google",
+      provider: "zoho",
       status: "sent",
       provider_message_id: sent.id,
     });
@@ -501,7 +502,7 @@ export async function sendCandidateEmail(
       to_address: to,
       subject: input.subject,
       body: input.body,
-      provider: "google",
+      provider: "zoho",
       status: "failed",
     });
     return { ok: false, error: msg };
