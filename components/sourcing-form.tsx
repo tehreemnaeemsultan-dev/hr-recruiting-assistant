@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { startSourcing, type SourcingState } from "@/app/source/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ export function SourcingForm({ disabled }: { disabled?: boolean }) {
             max={25}
             defaultValue={10}
           />
-          <p className="text-muted-foreground text-xs">Up to 25 per search.</p>
+          <p className="text-text-tertiary text-xs">Up to 25 per search.</p>
         </div>
       </div>
 
@@ -50,12 +50,22 @@ export function SourcingForm({ disabled }: { disabled?: boolean }) {
         </Alert>
       ) : null}
 
-      <div>
-        <Button type="submit" disabled={pending || disabled} className="gap-2">
-          <Search className="size-4" />
-          {pending ? "Starting search…" : "Search"}
-        </Button>
-      </div>
+      <Button
+        type="submit"
+        size="lg"
+        disabled={pending || disabled}
+        className="w-full gap-2"
+      >
+        {pending ? (
+          <>
+            <Loader2 className="size-4 animate-spin" /> Searching LinkedIn…
+          </>
+        ) : (
+          <>
+            <Search className="size-4" /> Search
+          </>
+        )}
+      </Button>
     </form>
   );
 }

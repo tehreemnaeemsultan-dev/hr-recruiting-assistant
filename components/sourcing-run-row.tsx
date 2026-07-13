@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X, Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { pollSourcingRun, deleteSourcingRun } from "@/app/source/actions";
 
@@ -65,10 +64,10 @@ export function SourcingRunRow({ run }: { run: RunData }) {
   }
 
   return (
-    <div className="bg-card flex items-center justify-between gap-3 rounded-xl border p-3">
+    <div className="bg-card hover:border-border-strong flex items-center justify-between gap-3 rounded-xl border p-3 shadow-xs transition-colors">
       <div className="min-w-0">
         <div className="truncate text-sm font-medium">{summary || "Search"}</div>
-        <div className="text-muted-foreground text-xs">
+        <div className="text-text-secondary text-xs">
           {run.status === "succeeded"
             ? `${run.resultCount} found`
             : run.status === "failed"
@@ -79,7 +78,7 @@ export function SourcingRunRow({ run }: { run: RunData }) {
       <div className="flex items-center gap-2">
         {run.status === "running" ? (
           <>
-            <Loader2 className="text-muted-foreground size-4 animate-spin" />
+            <Loader2 className="text-brand size-4 animate-spin" />
             <Button
               type="button"
               size="sm"
@@ -91,9 +90,15 @@ export function SourcingRunRow({ run }: { run: RunData }) {
             </Button>
           </>
         ) : (
-          <Badge variant={run.status === "succeeded" ? "secondary" : "outline"}>
+          <span
+            className={
+              run.status === "succeeded"
+                ? "inline-flex h-6 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300"
+                : "inline-flex h-6 items-center rounded-full border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-700 dark:border-red-900 dark:bg-red-950/60 dark:text-red-300"
+            }
+          >
             {run.status === "succeeded" ? "Done" : "Failed"}
-          </Badge>
+          </span>
         )}
         <Button
           type="button"

@@ -18,21 +18,9 @@ export interface SourcedProfileData {
   linkedinUrl: string | null;
 }
 
-const AVATAR_COLORS = [
-  "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  "bg-blue-500/15 text-blue-600 dark:text-blue-300",
-  "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  "bg-amber-500/15 text-amber-600 dark:text-amber-300",
-  "bg-rose-500/15 text-rose-600 dark:text-rose-300",
-];
 function initials(name: string) {
   const p = name.trim().split(/\s+/);
   return ((p[0]?.[0] ?? "") + (p[1]?.[0] ?? "")).toUpperCase() || "?";
-}
-function avatarColor(name: string) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
 export function SourcedProfileCard({
@@ -70,13 +58,9 @@ export function SourcedProfileCard({
   }
 
   return (
-    <div className="bg-card rounded-xl border p-4">
+    <div className="bg-card card-interactive rounded-xl border p-4">
       <div className="flex items-start gap-3">
-        <span
-          className={`flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarColor(
-            profile.fullName,
-          )}`}
-        >
+        <span className="avatar-gradient flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
           {initials(profile.fullName)}
         </span>
         <div className="min-w-0 flex-1">
@@ -110,7 +94,7 @@ export function SourcedProfileCard({
           value={jobId}
           onChange={(e) => setJobId(e.target.value)}
           disabled={jobs.length === 0}
-          className="border-input bg-background rounded-md border px-2 py-1.5 text-sm"
+          className="border-input bg-secondary focus-visible:border-ring focus-visible:ring-ring/25 h-9 rounded-lg border px-2.5 text-sm outline-none focus-visible:ring-2 disabled:opacity-50"
           aria-label="Choose a role"
         >
           {jobs.length === 0 ? (
@@ -132,6 +116,7 @@ export function SourcedProfileCard({
           variant="ghost"
           onClick={onDismiss}
           disabled={pending}
+          className="text-danger hover:bg-danger-bg hover:text-danger"
         >
           Dismiss
         </Button>

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Search, Users } from "lucide-react";
+import { UserSearch, Users, Info } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isApifyConfigured } from "@/lib/apify";
 import { AppShell } from "@/components/app-shell";
@@ -12,7 +12,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -79,10 +78,12 @@ export default async function SourcePage() {
 
   return (
     <AppShell email={user.email}>
-      <div className="mx-auto w-full max-w-4xl px-6 py-8 md:py-10">
+      <div className="page-enter mx-auto w-full max-w-4xl px-5 py-7 md:px-6 md:py-9">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Find people</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
+            Find people
+          </h1>
+          <p className="text-text-secondary mt-1 text-sm">
             Search public LinkedIn profiles and add the best matches to a role.
           </p>
         </div>
@@ -98,21 +99,27 @@ export default async function SourcePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <Search className="text-primary size-4" /> New search
+            <CardTitle className="flex items-center gap-2 text-base">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-[#0a66c2]/10 text-[#0a66c2]">
+                <UserSearch className="size-4" />
+              </span>
+              New search
             </CardTitle>
-            <CardDescription>
-              We only read public profiles — no logins or messaging, ever.
-            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-4">
+            <div className="bg-info-bg text-info flex items-start gap-2 rounded-lg p-3 text-xs">
+              <Info className="mt-px size-4 shrink-0" />
+              <span>
+                We only read public profiles — no logins or messaging, ever.
+              </span>
+            </div>
             <SourcingForm disabled={!configured} />
           </CardContent>
         </Card>
 
         {runs.length > 0 ? (
           <section className="mt-8">
-            <h2 className="mb-3 text-sm font-medium">Recent searches</h2>
+            <h2 className="mb-3 text-sm font-semibold">Recent searches</h2>
             <div className="flex flex-col gap-2">
               {runs.map((r) => (
                 <SourcingRunRow key={r.id} run={r} />
@@ -123,15 +130,15 @@ export default async function SourcePage() {
 
         <section className="mt-8">
           <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-            <Users className="text-primary size-4.5" /> To review
+            <Users className="text-brand size-5" /> To review
             {profiles.length > 0 ? (
-              <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
+              <span className="bg-brand-muted text-brand rounded-full px-2 py-0.5 text-xs font-medium">
                 {profiles.length}
               </span>
             ) : null}
           </h2>
           {profiles.length === 0 ? (
-            <div className="bg-card text-muted-foreground rounded-2xl border border-dashed px-6 py-12 text-center text-sm">
+            <div className="surface text-text-secondary border-dashed px-6 py-12 text-center text-sm">
               No one to review yet. Run a search above — results show up here for
               you to add or skip.
             </div>
