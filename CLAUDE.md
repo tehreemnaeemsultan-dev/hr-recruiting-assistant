@@ -71,6 +71,14 @@ clever. Do not build anything outside the current phase without the owner asking
   Meet link) is sent to the candidate **via Zoho** (`buildInterviewEmail` in
   `app/jobs/actions.ts`) and logged in `emails`; a failed email never rolls back
   the booked interview.
+- **Candidate self-scheduling (Phase 7):** the schedule dialog can instead
+  **email the candidate a booking link** (`sendBookingLink`) — a pending
+  `interviews` row with a `booking_token`. The public, no-auth page
+  `/book/[token]` (service-role client, gated by the token) shows open slots from
+  `lib/availability.ts` (**Mon–Fri, 11:00–13:00 & 15:00–17:00 PKT, 30-min slots**,
+  14-day lookahead, 12h min lead) minus already-scheduled interviews. Booking
+  (`bookInterviewSlot`) re-checks the slot, creates the Calendar/Meet event, and
+  sends the confirmation email. Availability rules are constants (no settings UI).
 - **LinkedIn sourcing (Phase 5):** Apify, **cookieless actors only** (SPEC §8.1).
   Default actor **`harvestapi~linkedin-profile-search`** (no login/cookies; returns
   full public profiles with a `maxItems` cap) — override with `APIFY_LINKEDIN_ACTOR`.

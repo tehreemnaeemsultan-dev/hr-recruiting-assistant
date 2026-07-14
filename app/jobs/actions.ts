@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, RESUMES_BUCKET } from "@/lib/supabase/admin";
 import { extractPdfText } from "@/lib/pdf";
@@ -9,6 +10,7 @@ import { parseCandidateFields } from "@/lib/parse";
 import { scoreCandidate, isScoringConfigured } from "@/lib/scoring";
 import { createCalendarEvent } from "@/lib/google";
 import { sendZohoMail } from "@/lib/zoho";
+import { buildInterviewEmail, buildBookingLinkEmail } from "@/lib/interview-email";
 import type { ParsedCandidate } from "@/lib/types";
 import { STAGES, type Stage } from "@/lib/constants";
 
@@ -518,69 +520,6 @@ interface ScheduleJoinRow {
   candidates: { full_name: string; email: string | null } | null;
 }
 
-/** Build the interview-invite email (plain text for logging + HTML for sending). */
-function buildInterviewEmail(opts: {
-  candidateName: string;
-  jobTitle: string;
-  startLocal: string; // "YYYY-MM-DDTHH:MM:SS" wall-clock Asia/Karachi
-  durationMin: number;
-  meetUrl: string | null;
-  senderName?: string;
-}): { subject: string; text: string; html: string } {
-  const when = new Date(`${opts.startLocal}+05:00`).toLocaleString("en-GB", {
-    timeZone: "Asia/Karachi",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-  const sender = opts.senderName ?? "The hiring team";
-  const subject = `Interview scheduled: ${opts.jobTitle}`;
-
-  const text = [
-    `Hi ${opts.candidateName},`,
-    ``,
-    `Good news — we'd like to invite you to an interview for the ${opts.jobTitle} role.`,
-    ``,
-    `When: ${when} (Pakistan time)`,
-    `Duration: ${opts.durationMin} minutes`,
-    opts.meetUrl
-      ? `Join link: ${opts.meetUrl}`
-      : `We'll share the joining details shortly.`,
-    ``,
-    `A calendar invite has also been sent to this email. If the time doesn't work, just reply to this message.`,
-    ``,
-    `Best regards,`,
-    sender,
-  ].join("\n");
-
-  const esc = (s: string) =>
-    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const meetBlock = opts.meetUrl
-    ? `<p style="margin:20px 0;">
-         <a href="${esc(opts.meetUrl)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:8px;font-weight:600;">Join Google Meet</a>
-       </p>
-       <p style="color:#555;font-size:13px;">Or copy this link: <a href="${esc(opts.meetUrl)}">${esc(opts.meetUrl)}</a></p>`
-    : `<p>We'll share the joining details shortly.</p>`;
-
-  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111;">
-  <p>Hi ${esc(opts.candidateName)},</p>
-  <p>Good news — we'd like to invite you to an interview for the <strong>${esc(opts.jobTitle)}</strong> role.</p>
-  <table style="border-collapse:collapse;margin:16px 0;">
-    <tr><td style="padding:4px 16px 4px 0;color:#555;">When</td><td style="padding:4px 0;font-weight:600;">${esc(when)} (PKT)</td></tr>
-    <tr><td style="padding:4px 16px 4px 0;color:#555;">Duration</td><td style="padding:4px 0;font-weight:600;">${opts.durationMin} minutes</td></tr>
-  </table>
-  ${meetBlock}
-  <p>A calendar invite has also been sent to this address. If the time doesn't work, just reply to this email.</p>
-  <p style="margin-top:20px;">Best regards,<br>${esc(sender)}</p>
-</div>`;
-
-  return { subject, text, html };
-}
-
 /** Create a Google Calendar event with a Meet link, invite the candidate, log it. */
 export async function scheduleInterview(
   applicationId: string,
@@ -698,4 +637,102 @@ export async function scheduleInterview(
       error: e instanceof Error ? e.message : "Failed to schedule interview.",
     };
   }
+}
+
+/**
+ * Create a pending interview + booking token and email the candidate a link to
+ * self-pick a time (candidate self-scheduling, Phase 7).
+ */
+export async function sendBookingLink(
+  applicationId: string,
+  jobId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await requireUser();
+  if (!supabase) return { ok: false, error: "Not authenticated." };
+
+  const { data } = await supabase
+    .from("applications")
+    .select("jobs(title), candidates(full_name, email)")
+    .eq("id", applicationId)
+    .single();
+  if (!data) return { ok: false, error: "Application not found." };
+  const row = data as unknown as ScheduleJoinRow;
+  const candName = row.candidates?.full_name ?? "Candidate";
+  const candEmail = row.candidates?.email?.trim() ?? null;
+  const jobTitle = row.jobs?.title ?? "the role";
+  if (!candEmail) {
+    return { ok: false, error: "Candidate has no email address on file." };
+  }
+
+  const token = crypto.randomUUID().replace(/-/g, "");
+  const expires = new Date(Date.now() + 14 * 24 * 3_600_000).toISOString();
+
+  // One active link per application: clear any prior pending request.
+  await supabase
+    .from("interviews")
+    .delete()
+    .eq("application_id", applicationId)
+    .eq("status", "pending");
+
+  const { error: insErr } = await supabase.from("interviews").insert({
+    application_id: applicationId,
+    status: "pending",
+    booking_token: token,
+    token_expires_at: expires,
+    duration_min: 30,
+  });
+  if (insErr) return { ok: false, error: insErr.message };
+
+  const h = await headers();
+  const host = h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const base = (host ? `${proto}://${host}` : process.env.APP_URL) ?? "";
+  const bookingUrl = `${base}/book/${token}`;
+
+  const mail = buildBookingLinkEmail({
+    candidateName: candName,
+    jobTitle,
+    bookingUrl,
+    senderName: process.env.ZOHO_FROM_NAME,
+  });
+  try {
+    const sent = await sendZohoMail({
+      to: candEmail,
+      subject: mail.subject,
+      html: mail.html,
+    });
+    await supabase.from("emails").insert({
+      application_id: applicationId,
+      direction: "outbound",
+      to_address: candEmail,
+      subject: mail.subject,
+      body: mail.text,
+      provider: "zoho",
+      status: "sent",
+      provider_message_id: sent.id,
+      message_id: sent.id,
+    });
+    await supabase.from("events").insert({
+      application_id: applicationId,
+      type: "email_sent",
+      payload: { to: candEmail, subject: mail.subject, kind: "booking_link" },
+    });
+  } catch (e) {
+    await supabase.from("emails").insert({
+      application_id: applicationId,
+      direction: "outbound",
+      to_address: candEmail,
+      subject: mail.subject,
+      body: mail.text,
+      provider: "zoho",
+      status: "failed",
+    });
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Failed to send booking link.",
+    };
+  }
+
+  revalidatePath(`/jobs/${jobId}`);
+  return { ok: true };
 }

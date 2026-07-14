@@ -14,7 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { scheduleInterview } from "@/app/jobs/actions";
+import { cn } from "@/lib/utils";
+import { scheduleInterview, sendBookingLink } from "@/app/jobs/actions";
 
 const DURATIONS = [30, 45, 60];
 
@@ -51,9 +52,23 @@ export function ScheduleInterviewDialog(props: Props) {
     ? (props.onOpenChange ?? (() => {}))
     : setInternalOpen;
 
+  const [mode, setMode] = useState<"invite" | "manual">("invite");
   const [start, setStart] = useState(defaultStart());
   const [duration, setDuration] = useState(45);
   const [busy, setBusy] = useState(false);
+
+  async function onSendLink() {
+    setBusy(true);
+    const res = await sendBookingLink(props.applicationId, props.jobId);
+    setBusy(false);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success(`Booking link sent to ${props.candidateName}.`);
+    setOpen(false);
+    router.refresh();
+  }
 
   async function onSchedule() {
     if (!start) {
@@ -107,38 +122,72 @@ export function ScheduleInterviewDialog(props: Props) {
           <DialogHeader>
             <DialogTitle>Schedule interview</DialogTitle>
             <DialogDescription>
-              Creates a Google Calendar event with a Meet link and invites{" "}
-              {props.candidateName}. Times are Asia/Karachi.
+              {mode === "invite"
+                ? `Email ${props.candidateName} a link to pick their own time from your open slots.`
+                : `Create a Google Meet event at a fixed time and invite ${props.candidateName}. Times are Asia/Karachi.`}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="interview-start">Start</Label>
-              <Input
-                id="interview-start"
-                type="datetime-local"
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
-              />
+          {/* Mode toggle */}
+          <div className="bg-secondary flex items-center gap-0.5 rounded-lg p-0.5">
+            {(
+              [
+                ["invite", "Let candidate pick"],
+                ["manual", "Set time myself"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setMode(value)}
+                aria-pressed={mode === value}
+                className={cn(
+                  "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  mode === value
+                    ? "bg-card text-foreground shadow-xs"
+                    : "text-text-secondary hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {mode === "invite" ? (
+            <div className="text-text-secondary rounded-lg border border-dashed p-4 text-sm">
+              The candidate gets a private link showing your available slots
+              (Mon–Fri, 11–1 & 3–5 PKT, 30 min). When they book, a Google Meet
+              event is created and a confirmation email is sent automatically.
             </div>
-            <div className="flex flex-col gap-2">
-              <Label>Duration</Label>
-              <div className="flex gap-2">
-                {DURATIONS.map((d) => (
-                  <Button
-                    key={d}
-                    type="button"
-                    size="sm"
-                    variant={duration === d ? "default" : "outline"}
-                    onClick={() => setDuration(d)}
-                  >
-                    {d} min
-                  </Button>
-                ))}
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="interview-start">Start</Label>
+                <Input
+                  id="interview-start"
+                  type="datetime-local"
+                  value={start}
+                  onChange={(e) => setStart(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Duration</Label>
+                <div className="flex gap-2">
+                  {DURATIONS.map((d) => (
+                    <Button
+                      key={d}
+                      type="button"
+                      size="sm"
+                      variant={duration === d ? "default" : "outline"}
+                      onClick={() => setDuration(d)}
+                    >
+                      {d} min
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <DialogFooter>
             <Button
@@ -149,9 +198,15 @@ export function ScheduleInterviewDialog(props: Props) {
             >
               Cancel
             </Button>
-            <Button type="button" onClick={onSchedule} disabled={busy}>
-              {busy ? "Scheduling…" : "Schedule"}
-            </Button>
+            {mode === "invite" ? (
+              <Button type="button" onClick={onSendLink} disabled={busy}>
+                {busy ? "Sending…" : "Send booking link"}
+              </Button>
+            ) : (
+              <Button type="button" onClick={onSchedule} disabled={busy}>
+                {busy ? "Scheduling…" : "Schedule"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
