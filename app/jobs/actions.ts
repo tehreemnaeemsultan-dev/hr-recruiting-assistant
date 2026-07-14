@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, RESUMES_BUCKET } from "@/lib/supabase/admin";
 import { extractPdfText } from "@/lib/pdf";
@@ -639,9 +640,9 @@ export async function scheduleInterview(
 }
 
 /**
- * Email the candidate the owner's Google Appointment Schedule link so they can
- * self-pick a time on Google Calendar (candidate self-scheduling — Option A).
- * The booking happens on Google; no in-app interview row is created.
+ * Create a pending interview + booking token and email the candidate the in-app
+ * booking link so they self-pick a time. Booking (bookInterviewSlot) then creates
+ * the Google Calendar/Meet event and sends the Zoho confirmation email.
  */
 export async function sendBookingLink(
   applicationId: string,
@@ -649,20 +650,6 @@ export async function sendBookingLink(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const supabase = await requireUser();
   if (!supabase) return { ok: false, error: "Not authenticated." };
-
-  const { data: settings } = await supabase
-    .from("app_settings")
-    .select("booking_url")
-    .eq("id", 1)
-    .maybeSingle();
-  const bookingUrl = (settings?.booking_url as string | null)?.trim();
-  if (!bookingUrl) {
-    return {
-      ok: false,
-      error:
-        "No booking link set. Add your Google Appointment Schedule link in Settings → Interview scheduling.",
-    };
-  }
 
   const { data } = await supabase
     .from("applications")
@@ -677,6 +664,31 @@ export async function sendBookingLink(
   if (!candEmail) {
     return { ok: false, error: "Candidate has no email address on file." };
   }
+
+  const token = crypto.randomUUID().replace(/-/g, "");
+  const expires = new Date(Date.now() + 14 * 24 * 3_600_000).toISOString();
+
+  // One active link per application: clear any prior pending request.
+  await supabase
+    .from("interviews")
+    .delete()
+    .eq("application_id", applicationId)
+    .eq("status", "pending");
+
+  const { error: insErr } = await supabase.from("interviews").insert({
+    application_id: applicationId,
+    status: "pending",
+    booking_token: token,
+    token_expires_at: expires,
+    duration_min: 30,
+  });
+  if (insErr) return { ok: false, error: insErr.message };
+
+  const h = await headers();
+  const host = h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const base = (host ? `${proto}://${host}` : process.env.APP_URL) ?? "";
+  const bookingUrl = `${base}/book/${token}`;
 
   const mail = buildBookingLinkEmail({
     candidateName: candName,

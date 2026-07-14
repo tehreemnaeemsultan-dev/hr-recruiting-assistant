@@ -123,7 +123,7 @@ export function ScheduleInterviewDialog(props: Props) {
             <DialogTitle>Schedule interview</DialogTitle>
             <DialogDescription>
               {mode === "invite"
-                ? `Email ${props.candidateName} your Google Calendar booking link to pick their own time.`
+                ? `Email ${props.candidateName} a link to pick their own time from your open slots.`
                 : `Create a Google Meet event at a fixed time and invite ${props.candidateName}. Times are Asia/Karachi.`}
             </DialogDescription>
           </DialogHeader>
@@ -155,10 +155,10 @@ export function ScheduleInterviewDialog(props: Props) {
 
           {mode === "invite" ? (
             <div className="text-text-secondary rounded-lg border border-dashed p-4 text-sm">
-              The candidate is emailed your <strong>Google Appointment Schedule</strong>{" "}
-              link. They pick a time on your Google Calendar and a Google Meet event is
-              created automatically. Set the link in{" "}
-              <span className="font-medium">Settings → Interview scheduling</span>.
+              The candidate gets a private link showing your open slots (Mon–Fri,
+              11–1 & 3–5 PKT, 30 min). When they pick one, a Google Meet event is
+              created on your calendar and a Zoho confirmation email is sent
+              automatically.
             </div>
           ) : (
             <div className="flex flex-col gap-4">

@@ -71,16 +71,18 @@ clever. Do not build anything outside the current phase without the owner asking
   Meet link) is sent to the candidate **via Zoho** (`buildInterviewEmail` in
   `app/jobs/actions.ts`) and logged in `emails`; a failed email never rolls back
   the booked interview.
-- **Candidate self-scheduling (Phase 7/8, Option A — Google Appointment
-  Schedule):** the schedule dialog's "Let candidate pick" mode emails the
-  candidate the owner's **Google Appointment Schedule** link (`sendBookingLink`);
-  the candidate books on Google Calendar (native Meet). The link is stored in the
-  `app_settings` singleton (`booking_url`), edited in Settings → Interview
-  scheduling (`saveBookingUrl`). Bookings live in Google Calendar — they do **not**
-  flow back into the app's board/`interviews` (accepted trade-off). The in-app
-  booking page `/book/[token]` + `lib/availability.ts` (Mon–Fri, 11–1 & 3–5 PKT,
-  30-min) remain in the codebase as a fallback but are no longer wired to the
-  send flow.
+- **Candidate self-scheduling (Phase 7, in-app):** the schedule dialog's "Let
+  candidate pick" mode emails the candidate the **in-app** booking link
+  (`sendBookingLink` → a pending `interviews` row with a `booking_token`). The
+  public, no-auth page `/book/[token]` (service-role client, token-gated; `/book`
+  is in the proxy's PUBLIC_PREFIXES) shows open slots from `lib/availability.ts`
+  (**Mon–Fri, 11:00–13:00 & 15:00–17:00 PKT, 30-min**, 14-day lookahead, 12h min
+  lead) minus already-scheduled interviews. Booking (`bookInterviewSlot`) creates
+  the Google Calendar/Meet event **and sends the Zoho confirmation email**, and
+  the interview shows on the board. (Option A — emailing a Google Appointment
+  Schedule link — was tried and reverted so the confirmation stays on Zoho + the
+  booking lands on the board; `app_settings.booking_url`/`saveBookingUrl` remain
+  but are unused.)
 - **LinkedIn sourcing (Phase 5):** Apify, **cookieless actors only** (SPEC §8.1).
   Default actor **`harvestapi~linkedin-profile-search`** (no login/cookies; returns
   full public profiles with a `maxItems` cap) — override with `APIFY_LINKEDIN_ACTOR`.

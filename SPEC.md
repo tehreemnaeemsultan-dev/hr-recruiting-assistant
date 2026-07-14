@@ -125,8 +125,8 @@ Postgres via Supabase. All tables owned by the single user; enable Row-Level Sec
 **Server:**
 - Server actions for all CRUD (jobs, candidates, applications, notes, stage moves).
 - API routes for things that must be endpoints:
-  - `POST /api/apify/webhook` — receives Apify run-finished callbacks (Phase 5).
-  - `GET /api/oauth/zoho/callback` and `GET /api/oauth/google/callback` — OAuth redirects (Phases 3–4).
+- `POST /api/apify/webhook` — receives Apify run-finished callbacks (Phase 5).
+- `GET /api/oauth/zoho/callback` and `GET /api/oauth/google/callback` — OAuth redirects (Phases 3–4).
 - Keep all third-party API calls and secrets **server-side only**.
 
 ---
@@ -203,14 +203,14 @@ Postgres via Supabase. All tables owned by the single user; enable Row-Level Sec
 **Output schema (the tool's `input_schema`):**
 ```json
 {
-  "overall_score": 0,
-  "recommendation": "strong | possible | weak",
-  "criteria_breakdown": [
-    { "criterion": "string (echoed from the free-form criteria)", "met": true, "evidence": "short quote or paraphrase from the CV", "weight_note": "why this mattered" }
-  ],
-  "strengths": ["string"],
-  "gaps": ["string"],
-  "summary": "2-3 sentence justification"
+"overall_score": 0,
+"recommendation": "strong | possible | weak",
+"criteria_breakdown": [
+  { "criterion": "string (echoed from the free-form criteria)", "met": true, "evidence": "short quote or paraphrase from the CV", "weight_note": "why this mattered" }
+],
+"strengths": ["string"],
+"gaps": ["string"],
+"summary": "2-3 sentence justification"
 }
 ```
 
