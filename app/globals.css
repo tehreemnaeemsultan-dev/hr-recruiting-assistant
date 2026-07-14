@@ -327,9 +327,21 @@
   66% { transform: translate(-20px, 24px) scale(0.96); }
 }
 
+/* Blinking eyes for the hero illustrated avatars. */
+.hero-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 5s ease-in-out infinite;
+}
+@keyframes blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .stagger > *,
   .page-enter,
+  .hero-eye,
   [class*="float-"],
   [class*="drift-"] {
     animation: none !important;

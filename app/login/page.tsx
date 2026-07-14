@@ -4,6 +4,60 @@ export const metadata = {
   title: "Sign in · Mujtaba Hires",
 };
 
+/** Self-contained illustrated avatar (no external requests), with blinking eyes. */
+const AVATARS = [
+  { bg1: "#f9c0cb", bg2: "#e07a94", skin: "#f2c9a0", hair: "#5a3b28", top: "#fef4ec", style: "long" },
+  { bg1: "#8fd7c6", bg2: "#3a9d88", skin: "#e0a878", hair: "#241f1b", top: "#eafaf5", style: "short" },
+  { bg1: "#f7d391", bg2: "#e0a24e", skin: "#f0c8a2", hair: "#8a3b2a", top: "#fdf6e7", style: "bob" },
+] as const;
+
+function HeroAvatar({ v }: { v: 0 | 1 | 2 }) {
+  const a = AVATARS[v];
+  const id = `hav${v}`;
+  const hair =
+    a.style === "long" ? (
+      <path
+        d="M29 46 Q29 21 50 21 Q71 21 71 46 Q66 33 50 32 Q34 33 29 46 Z M29 46 Q26 66 31 78 L37 78 Q31 58 36 44 Z M71 46 Q74 66 69 78 L63 78 Q69 58 64 44 Z"
+        fill={a.hair}
+      />
+    ) : a.style === "bob" ? (
+      <path
+        d="M29 50 Q29 22 50 22 Q71 22 71 50 L71 40 Q66 32 50 32 Q34 32 29 40 Z M29 50 L34 60 L37 43 Z M71 50 L66 60 L63 43 Z"
+        fill={a.hair}
+      />
+    ) : (
+      <path d="M30 45 Q32 23 50 23 Q68 23 70 45 Q64 32 50 32 Q36 32 30 45 Z" fill={a.hair} />
+    );
+  return (
+    <svg viewBox="0 0 100 100" className="size-11 shrink-0 rounded-full shadow-sm ring-2 ring-white/25" aria-hidden>
+      <defs>
+        <linearGradient id={`${id}g`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={a.bg1} />
+          <stop offset="1" stopColor={a.bg2} />
+        </linearGradient>
+        <clipPath id={`${id}c`}>
+          <circle cx="50" cy="50" r="50" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${id}c)`}>
+        <rect width="100" height="100" fill={`url(#${id}g)`} />
+        <ellipse cx="50" cy="102" rx="33" ry="26" fill={a.top} />
+        <rect x="45" y="58" width="10" height="15" rx="5" fill={a.skin} />
+        <circle cx="50" cy="45" r="18" fill={a.skin} />
+        {hair}
+        <g className="hero-eye" fill="#3a2e28">
+          <ellipse cx="43.5" cy="45" rx="2" ry="2.6" />
+          <ellipse cx="56.5" cy="45" rx="2" ry="2.6" />
+        </g>
+        <path d="M45 52 Q50 56 55 52" stroke="#b5695a" strokeWidth="2" fill="none" strokeLinecap="round" />
+        {v === 1 ? (
+          <path d="M39 49 Q50 66 61 49 Q57 58 50 58 Q43 58 39 49 Z" fill={a.hair} opacity="0.9" />
+        ) : null}
+      </g>
+    </svg>
+  );
+}
+
 /** A drifting candidate card for the hero visualization — real, polished content. */
 function FloatCard({
   className,
@@ -12,7 +66,7 @@ function FloatCard({
   duration,
   name,
   role,
-  initials,
+  avatar,
   score,
   scoreClass,
   stage,
@@ -24,7 +78,7 @@ function FloatCard({
   duration: string;
   name: string;
   role: string;
-  initials: string;
+  avatar: 0 | 1 | 2;
   score: string;
   scoreClass: string;
   stage: string;
@@ -41,9 +95,7 @@ function FloatCard({
       }
     >
       <div className="flex items-center gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-semibold text-white ring-1 ring-white/20">
-          {initials}
-        </span>
+        <HeroAvatar v={avatar} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-white">{name}</div>
           <div className="truncate text-xs text-white/60">{role}</div>
@@ -126,9 +178,9 @@ export default function LoginPage() {
             rotate="-6deg"
             delay="0s"
             duration="7s"
-            name="Ayesha Khan"
+            name="Emma Carter"
             role="Senior Product Designer"
-            initials="AK"
+            avatar={0}
             score="92"
             scoreClass="bg-emerald-400/90 text-emerald-950"
             stage="Interview"
@@ -139,9 +191,9 @@ export default function LoginPage() {
             rotate="4deg"
             delay="1.2s"
             duration="8.5s"
-            name="Bilal Ahmed"
+            name="James Bennett"
             role="Full-Stack Engineer"
-            initials="BA"
+            avatar={1}
             score="85"
             scoreClass="bg-amber-300/90 text-amber-950"
             stage="Shortlisted"
@@ -152,9 +204,9 @@ export default function LoginPage() {
             rotate="-3deg"
             delay="0.6s"
             duration="9s"
-            name="Sana Malik"
+            name="Olivia Reed"
             role="Data Scientist"
-            initials="SM"
+            avatar={2}
             score="78"
             scoreClass="bg-amber-300/90 text-amber-950"
             stage="Screening"
