@@ -40,6 +40,45 @@ export function buildSearchInput(q: SearchQuery): Record<string, unknown> {
   };
 }
 
+// --- Sourcing actor registry (cookieless only) ----------------------------
+// Each source maps our query onto a specific Apify actor's input schema.
+// Output shapes differ per actor, but normalizeProfile() below is defensive.
+
+export interface SourceActor {
+  id: string; // stable key used in the UI + form
+  label: string;
+  note: string;
+  slug: string; // Apify actor slug (username~actor)
+  buildInput: (q: SearchQuery) => Record<string, unknown>;
+}
+
+/** The cookieless actors the owner can choose between. Slugs are env-overridable. */
+export function getSourceActors(): SourceActor[] {
+  return [
+    {
+      id: "harvest",
+      label: "HarvestAPI — role, location & company",
+      note: "Best all-round. Filters by title, location and company.",
+      slug: process.env.APIFY_LINKEDIN_ACTOR || "harvestapi~linkedin-profile-search",
+      buildInput: buildSearchInput,
+    },
+    {
+      id: "apimaestro",
+      label: "apimaestro — role & location",
+      note: "Alternative source. Uses title + location (company is ignored).",
+      slug:
+        process.env.APIFY_LINKEDIN_ACTOR_2 ||
+        "apimaestro~linkedin-profile-search-scraper",
+      buildInput: (q) => ({
+        current_job_title: q.title || undefined,
+        location: q.location || undefined,
+        max_profiles: q.maxItems,
+        include_email: false,
+      }),
+    },
+  ];
+}
+
 function webhooksParam(): string | null {
   const appUrl = process.env.APP_URL;
   const secret = process.env.APIFY_WEBHOOK_SECRET;
@@ -64,9 +103,10 @@ export interface StartedRun {
 /** Start an actor run. Returns immediately (async) — do not wait for the scrape. */
 export async function startProfileSearch(
   input: Record<string, unknown>,
+  actorSlug: string = getSourcingActor(),
 ): Promise<StartedRun> {
   const token = requireToken();
-  const actor = getSourcingActor();
+  const actor = actorSlug;
   const wh = webhooksParam();
   const url =
     `${APIFY_API}/acts/${actor}/runs?token=${token}` +

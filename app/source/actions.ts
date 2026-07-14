@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
-  buildSearchInput,
+  getSourceActors,
   startProfileSearch,
-  getSourcingActor,
   isApifyConfigured,
+  type StartedRun,
 } from "@/lib/apify";
 import { ingestRunResults } from "@/lib/sourcing";
 import { scoreCandidate, isScoringConfigured } from "@/lib/scoring";
@@ -45,21 +45,35 @@ export async function startSourcing(
   if (!title) return { error: "Enter a role or title to search for." };
 
   const query = { title, location, company, maxItems };
-  const input = buildSearchInput(query);
 
-  try {
-    const run = await startProfileSearch(input);
-    const { error } = await supabase.from("sourcing_runs").insert({
-      apify_run_id: run.runId,
-      apify_dataset_id: run.datasetId,
-      actor: getSourcingActor(),
-      query,
-      status: "running",
-    });
-    if (error) return { error: error.message };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to start search." };
+  // Try each cookieless actor in order; if one fails to start (e.g. its usage
+  // limit/quota is hit), automatically fall back to the next.
+  const actors = getSourceActors();
+  let run: StartedRun | null = null;
+  let usedSlug = "";
+  let lastErr = "Failed to start search.";
+  for (const actor of actors) {
+    try {
+      run = await startProfileSearch(actor.buildInput(query), actor.slug);
+      usedSlug = actor.slug;
+      break;
+    } catch (e) {
+      lastErr = e instanceof Error ? e.message : lastErr;
+      // fall through to the next actor
+    }
   }
+  if (!run) {
+    return { error: `Sourcing providers are unavailable right now. ${lastErr}` };
+  }
+
+  const { error } = await supabase.from("sourcing_runs").insert({
+    apify_run_id: run.runId,
+    apify_dataset_id: run.datasetId,
+    actor: usedSlug,
+    query,
+    status: "running",
+  });
+  if (error) return { error: error.message };
 
   revalidatePath("/source");
   return { ok: true };

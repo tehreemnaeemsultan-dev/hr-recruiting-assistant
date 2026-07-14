@@ -84,8 +84,14 @@ clever. Do not build anything outside the current phase without the owner asking
   booking lands on the board; `app_settings.booking_url`/`saveBookingUrl` remain
   but are unused.)
 - **LinkedIn sourcing (Phase 5):** Apify, **cookieless actors only** (SPEC §8.1).
-  Default actor **`harvestapi~linkedin-profile-search`** (no login/cookies; returns
+  Primary actor **`harvestapi~linkedin-profile-search`** (no login/cookies; returns
   full public profiles with a `maxItems` cap) — override with `APIFY_LINKEDIN_ACTOR`.
+  A **cookieless fallback** actor (`apimaestro~linkedin-profile-search-scraper`,
+  override `APIFY_LINKEDIN_ACTOR_2`) is tried automatically if the primary fails to
+  start (e.g. its usage limit is hit). The actor registry + per-actor input builders
+  live in `lib/apify.ts` (`getSourceActors`); `startSourcing` iterates them and
+  records which slug actually ran. `normalizeProfile` is defensive across actor
+  output shapes.
   `lib/apify.ts` starts a run + normalizes profiles; `lib/sourcing.ts` ingests the
   dataset into `sourced_profiles` (staging, needs-review). Results arrive via
   `POST /api/apify/webhook` (verified with `APIFY_WEBHOOK_SECRET`) in production, or
