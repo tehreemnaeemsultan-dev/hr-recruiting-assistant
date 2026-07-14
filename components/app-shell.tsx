@@ -100,7 +100,7 @@ function Brand({
           className="ring-border size-9 rounded-xl object-cover shadow-sm ring-1"
         />
       ) : (
-        <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-[13px] font-bold text-white shadow-sm">
+        <span className="bg-primary text-primary-foreground shadow-inset-btn flex size-9 items-center justify-center rounded-xl text-[13px] font-bold">
           MH
         </span>
       )}

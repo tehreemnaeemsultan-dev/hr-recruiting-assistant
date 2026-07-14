@@ -54,15 +54,15 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-svh">
       {/* Left — brand hero (desktop only) */}
-      <section className="relative hidden w-3/5 flex-col justify-between overflow-hidden bg-gradient-to-br from-[#1a1333] via-[#2d1b69] to-[#1e1145] p-10 text-white lg:flex">
+      <section className="relative hidden w-3/5 flex-col justify-between overflow-hidden bg-gradient-to-br from-[#26231d] via-[#1c1a17] to-[#121110] p-10 text-white lg:flex">
         {/* Ambient drifting orbs */}
         <div className="pointer-events-none absolute inset-0 -z-0">
           <div
-            className="absolute -top-24 -left-16 size-96 rounded-full bg-violet-600/30 blur-3xl"
+            className="absolute -top-24 -left-16 size-96 rounded-full bg-[#e6d3a8]/15 blur-3xl"
             style={{ animation: "drift-orb 18s ease-in-out infinite" }}
           />
           <div
-            className="absolute right-0 bottom-0 size-[28rem] rounded-full bg-indigo-500/25 blur-3xl"
+            className="absolute right-0 bottom-0 size-[28rem] rounded-full bg-[#c2a878]/15 blur-3xl"
             style={{ animation: "drift-orb 22s ease-in-out 2s infinite" }}
           />
         </div>
@@ -106,7 +106,7 @@ export default function LoginPage() {
             delay="1.2s"
             duration="8.5s"
             score="78"
-            scoreClass="bg-violet-300/90 text-violet-950"
+            scoreClass="bg-amber-300/90 text-amber-950"
           />
           <FloatCard
             className="bottom-[16%] right-[14%]"

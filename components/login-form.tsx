@@ -17,7 +17,7 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <span className="mb-6 flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-base font-bold text-white shadow-lg shadow-[#3a5ce8]/25">
+      <span className="bg-primary text-primary-foreground shadow-inset-btn mb-6 flex size-12 items-center justify-center rounded-xl text-base font-bold">
         MH
       </span>
 
