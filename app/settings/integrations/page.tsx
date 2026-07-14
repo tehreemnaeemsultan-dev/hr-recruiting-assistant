@@ -47,6 +47,9 @@ export default async function IntegrationsPage({
   const google = configured ? await getGoogleConnection(supabase) : null;
   const zohoConfigured = isZohoConfigured();
   const zohoSender = zohoSenderAddress();
+  const calendarMissing = Boolean(
+    google && !(google.scope ?? "").includes("calendar.events"),
+  );
 
   return (
     <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
@@ -129,6 +132,13 @@ export default async function IntegrationsPage({
                 ? `Scheduling interviews as ${google.email ?? "your account"}`
                 : "Schedule Google Meet interviews on your calendar."}
             </p>
+            {calendarMissing ? (
+              <p className="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                ⚠ Calendar access wasn&apos;t granted — interview scheduling will
+                fail. Disconnect, then reconnect and allow Calendar access on the
+                Google consent screen.
+              </p>
+            ) : null}
           </div>
           <div className="shrink-0">
             {!configured ? (

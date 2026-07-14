@@ -309,7 +309,16 @@ export async function createCalendarEvent(
     },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Calendar event failed: ${await res.text()}`);
+  if (!res.ok) {
+    const body = await res.text();
+    if (res.status === 403 && /scope|insufficient/i.test(body)) {
+      throw new Error(
+        "Google Calendar permission is missing. Open Settings, disconnect Google, " +
+          "then reconnect and allow Calendar access on the Google consent screen.",
+      );
+    }
+    throw new Error(`Calendar event failed: ${body}`);
+  }
 
   const json = await res.json();
   const meetUrl: string | null =
