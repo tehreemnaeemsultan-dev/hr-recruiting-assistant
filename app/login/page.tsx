@@ -4,25 +4,35 @@ export const metadata = {
   title: "Sign in · Mujtaba Hires",
 };
 
-/** One abstract, drifting "candidate card" for the hero visualization. */
+/** A drifting candidate card for the hero visualization — real, polished content. */
 function FloatCard({
   className,
   rotate,
   delay,
   duration,
+  name,
+  role,
+  initials,
   score,
   scoreClass,
+  stage,
+  tags,
 }: {
   className: string;
   rotate: string;
   delay: string;
   duration: string;
+  name: string;
+  role: string;
+  initials: string;
   score: string;
   scoreClass: string;
+  stage: string;
+  tags: string[];
 }) {
   return (
     <div
-      className={`absolute w-52 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-md ${className}`}
+      className={`absolute w-64 rounded-2xl border border-white/15 bg-white/10 p-4 shadow-2xl shadow-black/30 backdrop-blur-md ${className}`}
       style={
         {
           ["--r"]: rotate,
@@ -31,20 +41,39 @@ function FloatCard({
       }
     >
       <div className="flex items-center gap-3">
-        <span className="size-9 rounded-full bg-gradient-to-br from-white/80 to-white/40" />
-        <div className="flex-1 space-y-1.5">
-          <div className="h-2 w-24 rounded-full bg-white/50" />
-          <div className="h-2 w-16 rounded-full bg-white/25" />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-semibold text-white ring-1 ring-white/20">
+          {initials}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-white">{name}</div>
+          <div className="truncate text-xs text-white/60">{role}</div>
         </div>
         <span
-          className={`rounded-full px-2 py-0.5 text-xs font-bold ${scoreClass}`}
+          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${scoreClass}`}
         >
           {score}
         </span>
       </div>
-      <div className="mt-3 space-y-1.5">
-        <div className="h-1.5 w-full rounded-full bg-white/20" />
-        <div className="h-1.5 w-3/4 rounded-full bg-white/15" />
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {tags.map((t) => (
+          <span
+            key={t}
+            className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/80 ring-1 ring-white/10"
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-medium text-emerald-200 ring-1 ring-emerald-300/20">
+          <span className="size-1.5 rounded-full bg-emerald-300" />
+          {stage}
+        </span>
+        <span className="text-[10px] font-medium text-white/40">
+          {score}% match
+        </span>
       </div>
     </div>
   );
@@ -93,28 +122,43 @@ export default function LoginPage() {
         {/* Floating candidate cards */}
         <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
           <FloatCard
-            className="top-[18%] right-[10%]"
+            className="top-[16%] right-[8%]"
             rotate="-6deg"
             delay="0s"
             duration="7s"
+            name="Ayesha Khan"
+            role="Senior Product Designer"
+            initials="AK"
             score="92"
             scoreClass="bg-emerald-400/90 text-emerald-950"
+            stage="Interview"
+            tags={["Figma", "Design Systems", "UX"]}
           />
           <FloatCard
-            className="top-[42%] right-[26%]"
+            className="top-[44%] right-[27%]"
             rotate="4deg"
             delay="1.2s"
             duration="8.5s"
-            score="78"
+            name="Bilal Ahmed"
+            role="Full-Stack Engineer"
+            initials="BA"
+            score="85"
             scoreClass="bg-amber-300/90 text-amber-950"
+            stage="Shortlisted"
+            tags={["React", "Node.js", "AWS"]}
           />
           <FloatCard
-            className="bottom-[16%] right-[14%]"
+            className="bottom-[14%] right-[12%]"
             rotate="-3deg"
             delay="0.6s"
             duration="9s"
-            score="85"
+            name="Sana Malik"
+            role="Data Scientist"
+            initials="SM"
+            score="78"
             scoreClass="bg-amber-300/90 text-amber-950"
+            stage="Screening"
+            tags={["Python", "ML", "SQL"]}
           />
         </div>
 
@@ -128,7 +172,7 @@ export default function LoginPage() {
       <section className="bg-background relative flex w-full flex-col lg:w-2/5">
         {/* Mobile branded header */}
         <div className="flex items-center gap-2.5 border-b px-5 py-4 lg:hidden">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#5b6ff0] to-[#3a5ce8] text-xs font-bold text-white">
+          <span className="bg-primary text-primary-foreground shadow-inset-btn flex size-8 items-center justify-center rounded-lg text-xs font-bold">
             MH
           </span>
           <span className="text-sm font-semibold tracking-tight">
