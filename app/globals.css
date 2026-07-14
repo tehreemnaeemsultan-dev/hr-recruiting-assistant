@@ -15,10 +15,10 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-jakarta);
-  --font-mono: var(--font-inter);
-  --font-heading: var(--font-jakarta);
+  --font-sans: var(--font-figtree);
+  --font-display: var(--font-figtree);
+  --font-mono: var(--font-figtree);
+  --font-heading: var(--font-figtree);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -91,45 +91,49 @@
   --radius-2xl: calc(var(--radius) * 2);
   --radius-3xl: calc(var(--radius) * 2.5);
 
-  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.04);
-  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
-  --shadow-md: 0 4px 6px rgb(0 0 0 / 0.05), 0 2px 4px rgb(0 0 0 / 0.04);
-  --shadow-lg: 0 10px 15px rgb(0 0 0 / 0.06), 0 4px 6px rgb(0 0 0 / 0.04);
+  /* Lovable: depth is shallow — borders contain, shadows are soft/warm and
+     reserved for overlays (dropdowns, dialogs) and focus. */
+  --shadow-xs: 0 1px 2px rgb(28 28 28 / 0.03);
+  --shadow-sm: 0 1px 3px rgb(28 28 28 / 0.05);
+  --shadow-md: 0 4px 12px rgb(28 28 28 / 0.08);
+  --shadow-lg: 0 10px 28px rgb(28 28 28 / 0.10);
 }
 
 /* ==========================================================================
    Light theme (default). Warm-grey base, electric-violet brand, zinc neutrals.
    ========================================================================== */
 :root {
-  --brand-primary: #6c5ce7;
-  --brand-primary-hover: #5a4bd1;
-  --brand-primary-light: #a29bfe;
-  --brand-primary-muted: #ede9fe;
-  --brand-primary-ghost: #f5f3ff;
+  /* Brand = warm-neutral charcoal (Lovable avoids saturated accents). */
+  --brand-primary: #1c1c1c;
+  --brand-primary-hover: #2e2e2c;
+  --brand-primary-light: rgba(28, 28, 28, 0.4);
+  --brand-primary-muted: rgba(28, 28, 28, 0.06);
+  --brand-primary-ghost: rgba(28, 28, 28, 0.04);
 
-  --surface-base: #fafafa;
-  --surface-card: #ffffff;
-  --surface-raised: #ffffff;
-  --surface-sunken: #f4f4f5;
-  --surface-sidebar: #fafafa;
+  /* Warm parchment surfaces. */
+  --surface-base: #f7f4ed;
+  --surface-card: #fbf9f4;
+  --surface-raised: #fdfcf9;
+  --surface-sunken: #efeae1;
+  --surface-sidebar: #f2eee5;
 
-  --border-default: #e4e4e7;
-  --border-subtle: #f4f4f5;
-  --border-strong: #d4d4d8;
+  --border-default: #eceae4;
+  --border-subtle: #f0eee8;
+  --border-strong: #d8d4ca;
 
-  --text-primary: #18181b;
-  --text-secondary: #71717a;
-  --text-tertiary: #a1a1aa;
-  --text-on-primary: #ffffff;
+  --text-primary: #1c1c1c;
+  --text-secondary: #5f5f5d;
+  --text-tertiary: #8f8c84;
+  --text-on-primary: #fcfbf8;
 
-  --status-success: #10b981;
-  --status-success-bg: #ecfdf5;
-  --status-warning: #f59e0b;
-  --status-warning-bg: #fffbeb;
-  --status-danger: #ef4444;
-  --status-danger-bg: #fef2f2;
-  --status-info: #3b82f6;
-  --status-info-bg: #eff6ff;
+  --status-success: #4f8a5b;
+  --status-success-bg: #eaf3ea;
+  --status-warning: #b7791f;
+  --status-warning-bg: #f7f0e0;
+  --status-danger: #c0492f;
+  --status-danger-bg: #f6e9e4;
+  --status-info: #3b6ea5;
+  --status-info-bg: #e8eef5;
 
   --radius: 0.5rem;
 
@@ -172,41 +176,43 @@
 /* ==========================================================================
    Dark theme — zinc-950 base, zinc-900 cards, same violet brand.
    ========================================================================== */
+/* Warm dark variant (the Lovable design is light-first; this keeps dark mode
+   coherent). Charcoal surfaces, cream text, a warm off-white accent. */
 .dark {
-  --brand-primary: #7c6cf0;
-  --brand-primary-hover: #6c5ce7;
-  --brand-primary-light: #a29bfe;
-  --brand-primary-muted: #2a2440;
-  --brand-primary-ghost: #211d33;
+  --brand-primary: #ece7db;
+  --brand-primary-hover: #f7f4ed;
+  --brand-primary-light: rgba(236, 231, 219, 0.35);
+  --brand-primary-muted: rgba(236, 231, 219, 0.08);
+  --brand-primary-ghost: rgba(236, 231, 219, 0.05);
 
-  --surface-base: #09090b;
-  --surface-card: #18181b;
-  --surface-raised: #1c1c20;
-  --surface-sunken: #27272a;
-  --surface-sidebar: #0c0c0e;
+  --surface-base: #191817;
+  --surface-card: #211f1c;
+  --surface-raised: #262420;
+  --surface-sunken: #141311;
+  --surface-sidebar: #151412;
 
-  --border-default: #27272a;
-  --border-subtle: #1c1c20;
-  --border-strong: #3f3f46;
+  --border-default: #302d28;
+  --border-subtle: #242220;
+  --border-strong: #45413a;
 
-  --text-primary: #fafafa;
-  --text-secondary: #a1a1aa;
-  --text-tertiary: #71717a;
-  --text-on-primary: #ffffff;
+  --text-primary: #f5f2ea;
+  --text-secondary: #a8a49a;
+  --text-tertiary: #706c63;
+  --text-on-primary: #1c1c1c;
 
-  --status-success: #34d399;
-  --status-success-bg: #052e22;
-  --status-warning: #fbbf24;
-  --status-warning-bg: #2e2205;
-  --status-danger: #f87171;
-  --status-danger-bg: #300f0f;
-  --status-info: #60a5fa;
-  --status-info-bg: #0a1f3d;
+  --status-success: #7bb389;
+  --status-success-bg: #16241a;
+  --status-warning: #d6a350;
+  --status-warning-bg: #2a2110;
+  --status-danger: #d98a72;
+  --status-danger-bg: #2b1712;
+  --status-info: #7ba3ce;
+  --status-info-bg: #13202e;
 
   --card-foreground: var(--text-primary);
   --popover-foreground: var(--text-primary);
   --accent: var(--brand-primary-muted);
-  --accent-foreground: #cfc9ff;
+  --accent-foreground: var(--text-primary);
   --secondary-foreground: var(--text-primary);
 }
 
@@ -252,30 +258,35 @@
 }
 
 @layer components {
-  /* Interactive surface: subtle lift + border emphasis on hover. */
+  /* Interactive surface: borders (not shadows) carry containment; hover just
+     darkens the border, matching Lovable's shallow-depth model. */
   .card-interactive {
     transition:
-      box-shadow 0.2s ease,
       border-color 0.2s ease,
-      transform 0.2s ease;
-    box-shadow: var(--shadow-xs);
+      background-color 0.2s ease;
   }
   .card-interactive:hover {
-    box-shadow: var(--shadow-sm);
     border-color: var(--border-strong);
   }
 
-  /* Gradient avatar chip (violet → indigo). */
+  /* Warm-neutral avatar chip (charcoal gradient). */
   .avatar-gradient {
-    background-image: linear-gradient(135deg, #8b7ff0, #6c5ce7 55%, #4f46e5);
-    color: #fff;
+    background-image: linear-gradient(135deg, #4a463f, #1c1c1c 70%);
+    color: #fcfbf8;
+  }
+
+  /* Signature inset shadow on dark (primary) buttons — a pressed-in feel. */
+  .shadow-inset-btn {
+    box-shadow:
+      rgba(255, 255, 255, 0.2) 0px 0.5px 0px 0px inset,
+      rgba(0, 0, 0, 0.2) 0px 0px 0px 0.5px inset,
+      rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
   }
 }
 
-/* Reusable elevated surface. */
+/* Reusable surface — border-only containment (no shadow), Lovable-style. */
 @utility surface {
   @apply rounded-xl border bg-card;
-  box-shadow: var(--shadow-xs);
 }
 
 /* Stagger helper: children fade/slide in sequentially. */

@@ -1,23 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
-// Body font — Inter. Bound to `--font-inter`, which globals.css maps to
-// `--font-sans` (so all shadcn components resolve `font-sans` from it).
-const inter = Inter({
-  variable: "--font-inter",
+// Figtree — a warm, humanist typeface (rounded terminals, organic curves) that
+// stands in for Lovable's proprietary "Camera Plain". One family for body,
+// UI, and display; globals.css maps `--font-figtree` to sans/heading/display.
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin"],
-  display: "swap",
-});
-
-// Display font — Plus Jakarta Sans, for large headings and the login hero.
-// Bound to `--font-jakarta` → `--font-display` / `font-heading`.
-const jakarta = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -35,12 +28,12 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${jakarta.variable} h-full antialiased`}
+      className={`${figtree.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >

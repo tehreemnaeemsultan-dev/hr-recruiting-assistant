@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /** Paths that an unauthenticated visitor is allowed to reach. */
-const PUBLIC_PREFIXES = ["/login", "/auth"];
+// /book/* is the public candidate self-scheduling page (gated by a secret token).
+const PUBLIC_PREFIXES = ["/login", "/auth", "/book"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PREFIXES.some(
