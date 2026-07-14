@@ -518,13 +518,77 @@ interface ScheduleJoinRow {
   candidates: { full_name: string; email: string | null } | null;
 }
 
+/** Build the interview-invite email (plain text for logging + HTML for sending). */
+function buildInterviewEmail(opts: {
+  candidateName: string;
+  jobTitle: string;
+  startLocal: string; // "YYYY-MM-DDTHH:MM:SS" wall-clock Asia/Karachi
+  durationMin: number;
+  meetUrl: string | null;
+  senderName?: string;
+}): { subject: string; text: string; html: string } {
+  const when = new Date(`${opts.startLocal}+05:00`).toLocaleString("en-GB", {
+    timeZone: "Asia/Karachi",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+  const sender = opts.senderName ?? "The hiring team";
+  const subject = `Interview scheduled: ${opts.jobTitle}`;
+
+  const text = [
+    `Hi ${opts.candidateName},`,
+    ``,
+    `Good news — we'd like to invite you to an interview for the ${opts.jobTitle} role.`,
+    ``,
+    `When: ${when} (Pakistan time)`,
+    `Duration: ${opts.durationMin} minutes`,
+    opts.meetUrl
+      ? `Join link: ${opts.meetUrl}`
+      : `We'll share the joining details shortly.`,
+    ``,
+    `A calendar invite has also been sent to this email. If the time doesn't work, just reply to this message.`,
+    ``,
+    `Best regards,`,
+    sender,
+  ].join("\n");
+
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const meetBlock = opts.meetUrl
+    ? `<p style="margin:20px 0;">
+         <a href="${esc(opts.meetUrl)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:8px;font-weight:600;">Join Google Meet</a>
+       </p>
+       <p style="color:#555;font-size:13px;">Or copy this link: <a href="${esc(opts.meetUrl)}">${esc(opts.meetUrl)}</a></p>`
+    : `<p>We'll share the joining details shortly.</p>`;
+
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111;">
+  <p>Hi ${esc(opts.candidateName)},</p>
+  <p>Good news — we'd like to invite you to an interview for the <strong>${esc(opts.jobTitle)}</strong> role.</p>
+  <table style="border-collapse:collapse;margin:16px 0;">
+    <tr><td style="padding:4px 16px 4px 0;color:#555;">When</td><td style="padding:4px 0;font-weight:600;">${esc(when)} (PKT)</td></tr>
+    <tr><td style="padding:4px 16px 4px 0;color:#555;">Duration</td><td style="padding:4px 0;font-weight:600;">${opts.durationMin} minutes</td></tr>
+  </table>
+  ${meetBlock}
+  <p>A calendar invite has also been sent to this address. If the time doesn't work, just reply to this email.</p>
+  <p style="margin-top:20px;">Best regards,<br>${esc(sender)}</p>
+</div>`;
+
+  return { subject, text, html };
+}
+
 /** Create a Google Calendar event with a Meet link, invite the candidate, log it. */
 export async function scheduleInterview(
   applicationId: string,
   jobId: string,
   input: { startLocal: string; endLocal: string },
 ): Promise<
-  { ok: true; meetUrl: string | null } | { ok: false; error: string }
+  | { ok: true; meetUrl: string | null; email: "sent" | "failed" | "no_address" }
+  | { ok: false; error: string }
 > {
   const supabase = await requireUser();
   if (!supabase) return { ok: false, error: "Not authenticated." };
@@ -568,8 +632,66 @@ export async function scheduleInterview(
       },
     });
 
+    // Automated interview-invite email to the candidate via Zoho, with the
+    // Meet link. The interview is already booked; a failed email must not undo it.
+    const candEmail = row.candidates?.email?.trim() ?? null;
+    let email: "sent" | "failed" | "no_address" = "no_address";
+    if (candEmail) {
+      const durationMin = Math.max(
+        1,
+        Math.round(
+          (new Date(input.endLocal).getTime() -
+            new Date(input.startLocal).getTime()) /
+            60000,
+        ),
+      );
+      const mail = buildInterviewEmail({
+        candidateName: candName,
+        jobTitle,
+        startLocal: input.startLocal,
+        durationMin,
+        meetUrl: ev.meetUrl,
+        senderName: process.env.ZOHO_FROM_NAME,
+      });
+      try {
+        const sent = await sendZohoMail({
+          to: candEmail,
+          subject: mail.subject,
+          html: mail.html,
+        });
+        await supabase.from("emails").insert({
+          application_id: applicationId,
+          direction: "outbound",
+          to_address: candEmail,
+          subject: mail.subject,
+          body: mail.text,
+          provider: "zoho",
+          status: "sent",
+          provider_message_id: sent.id,
+          message_id: sent.id,
+        });
+        await supabase.from("events").insert({
+          application_id: applicationId,
+          type: "email_sent",
+          payload: { to: candEmail, subject: mail.subject, kind: "interview_invite" },
+        });
+        email = "sent";
+      } catch {
+        await supabase.from("emails").insert({
+          application_id: applicationId,
+          direction: "outbound",
+          to_address: candEmail,
+          subject: mail.subject,
+          body: mail.text,
+          provider: "zoho",
+          status: "failed",
+        });
+        email = "failed";
+      }
+    }
+
     revalidatePath(`/jobs/${jobId}`);
-    return { ok: true, meetUrl: ev.meetUrl };
+    return { ok: true, meetUrl: ev.meetUrl, email };
   } catch (e) {
     return {
       ok: false,

@@ -66,7 +66,11 @@ clever. Do not build anything outside the current phase without the owner asking
   `conferenceData.createRequest` for the Meet link, `sendUpdates=all` to invite the
   candidate, time zone **Asia/Karachi**). Moving a candidate to an interview stage
   on the board opens a time/duration dialog; results are stored in `interviews` and
-  shown on the candidate detail page, with an `interview_scheduled` event.
+  shown on the candidate detail page, with an `interview_scheduled` event. On
+  success, an automated interview-invite email (date/time in Asia/Karachi + the
+  Meet link) is sent to the candidate **via Zoho** (`buildInterviewEmail` in
+  `app/jobs/actions.ts`) and logged in `emails`; a failed email never rolls back
+  the booked interview.
 - **LinkedIn sourcing (Phase 5):** Apify, **cookieless actors only** (SPEC §8.1).
   Default actor **`harvestapi~linkedin-profile-search`** (no login/cookies; returns
   full public profiles with a `maxItems` cap) — override with `APIFY_LINKEDIN_ACTOR`.

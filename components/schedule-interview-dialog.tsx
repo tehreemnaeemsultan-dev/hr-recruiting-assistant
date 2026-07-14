@@ -70,11 +70,21 @@ export function ScheduleInterviewDialog(props: Props) {
       toast.error(res.error);
       return;
     }
-    toast.success(
-      res.meetUrl
-        ? "Interview scheduled — Google Meet link created and invite sent."
-        : "Interview scheduled and invite sent.",
-    );
+    if (res.email === "sent") {
+      toast.success(
+        "Interview scheduled — Meet link created and emailed to the candidate.",
+      );
+    } else if (res.email === "failed") {
+      toast.warning(
+        "Interview scheduled, but the invite email to the candidate failed — check the Emails tab.",
+      );
+    } else {
+      toast.success(
+        res.meetUrl
+          ? "Interview scheduled — Meet link created. (No candidate email on file.)"
+          : "Interview scheduled. (No candidate email on file.)",
+      );
+    }
     setOpen(false);
     router.refresh();
   }
