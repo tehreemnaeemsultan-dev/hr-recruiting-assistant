@@ -113,3 +113,28 @@ export async function disconnectGoogle(): Promise<
   revalidatePath("/settings/integrations");
   return { ok: true };
 }
+
+/** Save the owner's Google Appointment Schedule link (candidate self-scheduling). */
+export async function saveBookingUrl(
+  url: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not authenticated." };
+
+  const trimmed = url.trim();
+  if (trimmed && !/^https?:\/\/\S+$/i.test(trimmed)) {
+    return { ok: false, error: "Enter a full URL starting with https://" };
+  }
+
+  const { error } = await supabase.from("app_settings").upsert(
+    { id: 1, booking_url: trimmed || null, updated_at: new Date().toISOString() },
+    { onConflict: "id" },
+  );
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/settings/integrations");
+  return { ok: true };
+}

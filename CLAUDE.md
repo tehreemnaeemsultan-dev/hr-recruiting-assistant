@@ -71,14 +71,16 @@ clever. Do not build anything outside the current phase without the owner asking
   Meet link) is sent to the candidate **via Zoho** (`buildInterviewEmail` in
   `app/jobs/actions.ts`) and logged in `emails`; a failed email never rolls back
   the booked interview.
-- **Candidate self-scheduling (Phase 7):** the schedule dialog can instead
-  **email the candidate a booking link** (`sendBookingLink`) — a pending
-  `interviews` row with a `booking_token`. The public, no-auth page
-  `/book/[token]` (service-role client, gated by the token) shows open slots from
-  `lib/availability.ts` (**Mon–Fri, 11:00–13:00 & 15:00–17:00 PKT, 30-min slots**,
-  14-day lookahead, 12h min lead) minus already-scheduled interviews. Booking
-  (`bookInterviewSlot`) re-checks the slot, creates the Calendar/Meet event, and
-  sends the confirmation email. Availability rules are constants (no settings UI).
+- **Candidate self-scheduling (Phase 7/8, Option A — Google Appointment
+  Schedule):** the schedule dialog's "Let candidate pick" mode emails the
+  candidate the owner's **Google Appointment Schedule** link (`sendBookingLink`);
+  the candidate books on Google Calendar (native Meet). The link is stored in the
+  `app_settings` singleton (`booking_url`), edited in Settings → Interview
+  scheduling (`saveBookingUrl`). Bookings live in Google Calendar — they do **not**
+  flow back into the app's board/`interviews` (accepted trade-off). The in-app
+  booking page `/book/[token]` + `lib/availability.ts` (Mon–Fri, 11–1 & 3–5 PKT,
+  30-min) remain in the codebase as a fallback but are no longer wired to the
+  send flow.
 - **LinkedIn sourcing (Phase 5):** Apify, **cookieless actors only** (SPEC §8.1).
   Default actor **`harvestapi~linkedin-profile-search`** (no login/cookies; returns
   full public profiles with a `maxItems` cap) — override with `APIFY_LINKEDIN_ACTOR`.

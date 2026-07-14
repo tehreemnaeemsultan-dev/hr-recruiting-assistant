@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { GmailIcon, ZohoMailIcon } from "@/components/brand-icons";
 import { ProfilePhotoForm } from "@/components/profile-photo-form";
 import { DisconnectGoogleButton } from "@/components/disconnect-google-button";
+import { BookingUrlForm } from "@/components/booking-url-form";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -50,6 +51,12 @@ export default async function IntegrationsPage({
   const calendarMissing = Boolean(
     google && !(google.scope ?? "").includes("calendar.events"),
   );
+  const { data: settings } = await supabase
+    .from("app_settings")
+    .select("booking_url")
+    .eq("id", 1)
+    .maybeSingle();
+  const bookingUrl = (settings?.booking_url as string | null) ?? null;
 
   return (
     <AppShell email={user.email} avatarUrl={(user.user_metadata?.avatar_url as string | undefined) ?? null}>
@@ -155,6 +162,26 @@ export default async function IntegrationsPage({
               </Button>
             )}
           </div>
+        </div>
+
+        {/* Interview scheduling */}
+        <h2 className="text-text-tertiary mb-2 mt-8 text-xs font-semibold uppercase tracking-wider">
+          Interview scheduling
+        </h2>
+        <div className="surface p-5">
+          <h3 className="font-semibold">Candidate self-scheduling link</h3>
+          <p className="text-text-secondary mt-0.5 mb-3 text-sm">
+            Paste your{" "}
+            <span className="font-medium">Google Calendar → Appointment schedule</span>{" "}
+            link. When you choose &ldquo;Let candidate pick&rdquo; while scheduling, the
+            candidate is emailed this link to book a time on your calendar.
+          </p>
+          <BookingUrlForm initialUrl={bookingUrl} />
+          <p className="text-text-tertiary mt-2 text-xs">
+            In Google Calendar: <strong>Create → Appointment schedule</strong> → set 30-min
+            slots and your availability (Mon–Fri, 11–1 &amp; 3–5) → turn on Google Meet →
+            copy the public booking-page link.
+          </p>
         </div>
 
         {/* Account */}
