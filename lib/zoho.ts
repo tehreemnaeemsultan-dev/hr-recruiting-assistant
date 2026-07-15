@@ -59,12 +59,24 @@ function getTransporter() {
   return transporter;
 }
 
+/** Recipients the app must never email (comma-separated env, e.g. during testing). */
+function isSuppressed(to: string): boolean {
+  const list = (process.env.EMAIL_SUPPRESS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(to.trim().toLowerCase());
+}
+
 /** Send an HTML email from the configured Zoho mailbox via SMTP. */
 export async function sendZohoMail(msg: {
   to: string;
   subject: string;
   html: string;
 }): Promise<{ id: string }> {
+  if (isSuppressed(msg.to)) {
+    throw new Error(`Email to ${msg.to} is blocked (suppression list / testing).`);
+  }
   const { user, fromName } = requireZohoConfig();
   const from = fromName ? `"${fromName}" <${user}>` : user;
 
